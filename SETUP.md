@@ -1,4 +1,4 @@
-# 🍛 Kutunza Gourmet — Setup Guide
+# Kutunza Gourmet — Setup Guide
 ## From Zero to Live in ~30 minutes
 
 ---
@@ -14,50 +14,18 @@
 1. Left sidebar → **Authentication** → **Get started**
 2. **Sign-in method** tab → Enable these providers:
    - ✅ **Email/Password**
-   - ✅ **Google**
+   - ✅ **Google** (optional, for mobile)
 3. Click Save
 
 ### 1.3 Create Firestore Database
 1. Left sidebar → **Firestore Database** → **Create database**
-2. Choose **Start in production mode** → Select region: `europe-west1` (closest to Lagos)
-3. After creating, go to **Rules** tab and paste:
+2. Choose **Start in production mode** → Select region: `europe-west1`
+3. After creating, go to **Rules** tab and paste the contents of `firestore.rules`
 
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // Users can read/write their own profile
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      match /orders/{orderId} {
-        allow read: if request.auth != null && request.auth.uid == userId;
-      }
-    }
-    // Orders — owner or admin can read
-    match /orders/{orderId} {
-      allow create: if request.auth != null;
-      allow read: if request.auth != null && 
-        (resource.data.userId == request.auth.uid || 
-         exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
-    }
-    // Menu is public read
-    match /menu/{catId} {
-      allow read: if true;
-      allow write: if request.auth != null && 
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
-    }
-    // Admins collection
-    match /admins/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-    }
-  }
-}
-```
-
-### 1.4 Get Frontend Config
+### 1.4 Get Web App Config (for Admin Dashboard)
 1. ⚙️ Project Settings → **Your apps** → Click **</>** (Web)
-2. Register app name: `kutunza-web`
-3. Copy the `firebaseConfig` object
+2. Register app name: `kutunza-admin`
+3. Copy the `firebaseConfig` values for the admin `.env`
 
 ### 1.5 Get Backend Service Account
 1. ⚙️ Project Settings → **Service accounts**
@@ -81,51 +49,70 @@ service cloud.firestore {
 cd backend
 npm install
 
-# Copy env file
 cp .env.example .env
+# Edit .env:
+#   FIREBASE_PROJECT_ID=kutunza-gourmet
+#   FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxx@kutunza-gourmet.iam.gserviceaccount.com
+#   FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+#   PAYSTACK_SECRET_KEY=sk_test_xxx
+#   ADMIN_URL=http://localhost:5174
 
-# Edit .env and fill in:
-# FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json
-# PAYSTACK_SECRET_KEY=sk_test_xxx
-# PAYSTACK_PUBLIC_KEY=pk_test_xxx
-# FRONTEND_URL=http://localhost:5173
-
-# Start development server
 npm run dev
-# → Running on http://localhost:4000
+# → http://localhost:4000
 ```
 
 ---
 
-## STEP 4 — Frontend Setup
+## STEP 4 — Admin Dashboard Setup
 
 ```bash
-cd frontend
+cd admin
 npm install
 
-# Copy env file
 cp .env.example .env
+# Edit .env with your Firebase web config:
+#   VITE_FB_API_KEY=AIzaSy...
+#   VITE_FB_AUTH_DOMAIN=kutunza-gourmet.firebaseapp.com
+#   VITE_FB_PROJECT_ID=kutunza-gourmet
+#   VITE_FB_STORAGE_BUCKET=kutunza-gourmet.appspot.com
+#   VITE_FB_MESSAGING_SENDER_ID=123456789
+#   VITE_FB_APP_ID=1:123456789:web:abc
+#   VITE_API_URL=http://localhost:4000/api
 
-# Edit .env and fill in Firebase config + Paystack public key:
-# VITE_FIREBASE_API_KEY=AIzaSy...
-# VITE_FIREBASE_AUTH_DOMAIN=kutunza-gourmet.firebaseapp.com
-# VITE_FIREBASE_PROJECT_ID=kutunza-gourmet
-# VITE_FIREBASE_STORAGE_BUCKET=kutunza-gourmet.appspot.com
-# VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
-# VITE_FIREBASE_APP_ID=1:123456789:web:abc
-# VITE_API_URL=http://localhost:4000/api
-# VITE_PAYSTACK_PUBLIC_KEY=pk_test_xxx
-
-# Start dev server
 npm run dev
-# → Running on http://localhost:5173
+# → http://localhost:5174
 ```
 
 ---
 
-## STEP 5 — Make Yourself Admin
+## STEP 5 — Mobile App Setup
 
-After creating your account in the app:
+```bash
+cd mobile
+npm install
+
+cp .env.example .env
+# Edit .env with your Firebase config:
+#   EXPO_PUBLIC_FB_API_KEY=AIzaSy...
+#   EXPO_PUBLIC_FB_AUTH_DOMAIN=kutunza-gourmet.firebaseapp.com
+#   EXPO_PUBLIC_FB_PROJECT_ID=kutunza-gourmet
+#   EXPO_PUBLIC_FB_STORAGE_BUCKET=kutunza-gourmet.appspot.com
+#   EXPO_PUBLIC_FB_MESSAGING_SENDER_ID=123456789
+#   EXPO_PUBLIC_FB_APP_ID=1:123456789:web:abc
+#   EXPO_PUBLIC_API_URL=http://YOUR_LOCAL_IP:4000/api
+#   EXPO_PUBLIC_PAYSTACK_PUBLIC_KEY=pk_test_xxx
+
+npx expo start
+# Scan QR with Expo Go, or press i (iOS) / a (Android)
+```
+
+> **Note**: For the API URL on physical devices, use your computer's local IP (e.g. `192.168.1.x`), not `localhost`.
+
+---
+
+## STEP 6 — Make Yourself Admin
+
+After creating your account in the mobile app:
 
 1. Go to Firebase Console → Firestore → **admins** collection
 2. Add document: Document ID = your Firebase UID
@@ -133,80 +120,72 @@ After creating your account in the app:
 
 To find your UID: Firebase Console → Authentication → Users → copy the User UID
 
----
-
-## STEP 6 — Seed Menu to Database (Optional)
-
-After logging in as admin, open browser console and run:
-```js
-// This seeds the DEFAULT_MENU to Firestore so admins can edit it live
-fetch('/api/menu/seed', {
-  method: 'POST',
-  headers: { 
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer ' + await firebase.auth().currentUser.getIdToken()
-  },
-  body: JSON.stringify({ categories: DEFAULT_MENU })
-})
-```
+Then log in to the admin dashboard at `http://localhost:5174`
 
 ---
 
-## STEP 7 — Deploy to Production
+## STEP 7 — Seed Menu to Database
 
-### Backend → Railway (Recommended)
+After logging in to the admin dashboard:
+1. Navigate to the **Menu** page
+2. Click **Seed Default Menu** button
+3. The default menu categories and items will be populated in Firestore
+
+Or via the mobile app — the default menu is bundled and will show even without seeding.
+
+---
+
+## STEP 8 — Deploy to Production
+
+### Backend → Railway
 ```bash
-# Install Railway CLI
 npm i -g @railway/cli
-
-# Login and deploy
 railway login
+cd backend
 railway init
 railway up
-
-# Set environment variables in Railway dashboard
-# (same as your .env file)
+# Set env vars in Railway dashboard
 ```
 
-### Frontend → Vercel
+### Admin Dashboard → Vercel
 ```bash
-# Install Vercel CLI
 npm i -g vercel
-
-cd frontend
+cd admin
 vercel
-
-# Set environment variables in Vercel dashboard
+# Set env vars in Vercel dashboard
 # Update VITE_API_URL to your Railway backend URL
 ```
 
+### Mobile App → Expo EAS Build
+```bash
+npm i -g eas-cli
+cd mobile
+eas login
+eas build:configure
+eas build --platform all
+# Submit to stores:
+eas submit --platform ios
+eas submit --platform android
+```
+
 ---
 
-## Firestore Collections Structure
+## Firestore Collections
 
 ```
 firestore/
-├── admins/
-│   └── {uid}                    ← admin users
-├── menu/
-│   └── {catId}                  ← menu categories with items array
-├── orders/
-│   └── {orderId}                ← all orders
-│       ├── orderId: "KTZ-..."
-│       ├── userId: "firebase-uid"
-│       ├── customer: { name, phone, email }
-│       ├── cart: [{ name, qty, finalPrice, bowlSize }]
-│       ├── status: "pending|confirmed|preparing|out_for_delivery|delivered"
-│       ├── paymentStatus: "pending|paid|failed"
-│       ├── paystackReference: "xxx"
-│       ├── total: 15000
-│       └── timeline: [{ status, timestamp, note }]
-├── users/
-│   └── {uid}
-│       ├── name, email, phone, address
-│       └── orders/              ← user's order references
-└── payments/
-    └── {auto-id}               ← payment event logs
+├── admins/{uid}                 ← admin users
+├── menu/{catId}                 ← categories with items array
+├── orders/{orderId}             ← all orders
+│   ├── orderId, userId, customer { name, phone, email }
+│   ├── cart [{ name, qty, finalPrice, bowlSize }]
+│   ├── status: pending → confirmed → preparing → out_for_delivery → delivered
+│   ├── paymentStatus: pending | paid | failed
+│   └── timeline [{ status, timestamp, note }]
+├── events/{eventId}             ← event/catering bookings
+├── users/{uid}                  ← user profiles
+├── payments/{auto-id}           ← payment event logs
+└── settings/config              ← delivery fee, min order
 ```
 
 ---
@@ -214,15 +193,9 @@ firestore/
 ## Going Live Checklist
 
 - [ ] Switch Paystack from **test** keys to **live** keys
-- [ ] Update Firebase Auth authorized domains to include your production URL
+- [ ] Update Firebase Auth authorized domains for production
 - [ ] Set `NODE_ENV=production` on backend
-- [ ] Update CORS origins in `server.js` to your production frontend URL
-- [ ] Set Paystack webhook URL to production backend URL
-- [ ] Test a full order flow end-to-end
-
----
-
-## Support & Contacts
-- Firebase docs: https://firebase.google.com/docs
-- Paystack docs: https://paystack.com/docs
-- Paystack Nigeria support: support@paystack.com
+- [ ] Update CORS origins in `server.js` with production admin URL
+- [ ] Set Paystack webhook URL to production backend
+- [ ] Build and submit mobile apps via EAS
+- [ ] Test full order flow end-to-end on real devices

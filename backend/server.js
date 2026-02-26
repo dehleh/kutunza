@@ -40,10 +40,12 @@ const IS_PROD = process.env.NODE_ENV === "production";
 app.use(helmet());
 app.use(morgan(IS_PROD ? "combined" : "dev"));
 
-// CORS — allow frontend
+// CORS — allow admin webapp + mobile app
 app.use(cors({
   origin: [
+    process.env.ADMIN_URL || "http://localhost:5174",
     process.env.FRONTEND_URL || "http://localhost:5173",
+    "https://admin.kutunzafoods.com",
     "https://kutunzafoods.com",
     "https://www.kutunzafoods.com",
   ],
