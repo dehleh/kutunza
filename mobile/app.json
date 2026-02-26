@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Kutunza Gourmet",
+    "slug": "kutunza-gourmet",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "scheme": "kutunza",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "backgroundColor": "#1a0a0a",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "bundleIdentifier": "com.kutunza.gourmet",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "com.kutunza.gourmet",
+      "adaptiveIcon": {
+        "backgroundColor": "#1a0a0a"
+      }
+    },
+    "plugins": [
+      "expo-status-bar"
+    ]
+  }
+}
