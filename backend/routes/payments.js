@@ -1,54 +1,72 @@
 // backend/routes/payments.js
-// Paystack payment initialization and webhook verification
+// Paystack payment initialization, verification, webhook, and refund
 
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const crypto = require("crypto");
 const { getDb } = require("../firebase");
-const { requireAuth } = require("../middleware/auth");
+const { requireAuth, requireAdmin } = require("../middleware/auth");
 
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
 const PAYSTACK_BASE = "https://api.paystack.co";
 
-// ─── POST /payments/initialize ───────────────────────────────────────────────
-// Creates a Paystack payment session and returns the payment URL
-router.post("/initialize", requireAuth, async (req, res) => {
-  const { amount, email, orderId, metadata } = req.body;
+// Startup validation
+if (!PAYSTACK_SECRET) {
+  console.error("❌ PAYSTACK_SECRET_KEY is not set. Payment routes will fail.");
+}
 
-  if (!amount || !email) {
-    return res.status(400).json({ error: "Amount and email are required" });
+// ─── POST /payments/initialize ───────────────────────────────────────────────
+// Amount is read from the stored order — never trusted from the client
+router.post("/initialize", requireAuth, async (req, res) => {
+  if (!PAYSTACK_SECRET) return res.status(503).json({ error: "Payment service unavailable" });
+
+  const { orderId, email, metadata } = req.body;
+  if (!orderId || !email) {
+    return res.status(400).json({ error: "orderId and email are required" });
   }
 
+  const db = getDb();
+
   try {
+    const orderDoc = await db.collection("orders").doc(orderId).get();
+    if (!orderDoc.exists) return res.status(404).json({ error: "Order not found" });
+
+    const order = orderDoc.data();
+    if (order.userId !== req.user.uid) return res.status(403).json({ error: "Not your order" });
+    if (order.paymentStatus === "paid") return res.status(400).json({ error: "Order is already paid" });
+
+    const amount = order.total; // Server-side authoritative total
+
     const response = await axios.post(
       `${PAYSTACK_BASE}/transaction/initialize`,
       {
-        amount: amount * 100, // Paystack expects kobo (multiply naira × 100)
+        amount: amount * 100, // Paystack expects kobo
         email,
-        reference: orderId || `KTZ-${Date.now()}`,
+        reference: orderId,
         currency: "NGN",
-        callback_url: `${process.env.FRONTEND_URL}/payment/callback`,
+        callback_url: `${process.env.FRONTEND_URL || "http://localhost:5173"}/payment/callback`,
         metadata: {
           orderId,
           userId: req.user.uid,
+          expectedAmount: amount,
           custom_fields: [
             { display_name: "Order ID", variable_name: "order_id", value: orderId },
             { display_name: "Customer", variable_name: "customer", value: metadata?.customerName || "" },
           ],
-          ...metadata,
         },
         channels: ["card", "bank", "ussd", "mobile_money", "bank_transfer"],
       },
-      {
-        headers: {
-          Authorization: `Bearer ${PAYSTACK_SECRET}`,
-          "Content-Type": "application/json",
-        },
-      }
+      { headers: { Authorization: `Bearer ${PAYSTACK_SECRET}`, "Content-Type": "application/json" } }
     );
 
     const { authorization_url, access_code, reference } = response.data.data;
+
+    await db.collection("orders").doc(orderId).update({
+      paystackReference: reference,
+      updatedAt: new Date().toISOString(),
+    });
+
     res.json({ success: true, authorizationUrl: authorization_url, accessCode: access_code, reference });
   } catch (err) {
     console.error("Paystack init error:", err.response?.data || err.message);
@@ -57,8 +75,10 @@ router.post("/initialize", requireAuth, async (req, res) => {
 });
 
 // ─── GET /payments/verify/:reference ─────────────────────────────────────────
-// Verify a payment after redirect callback
+// Validates that the paid amount matches the order total
 router.get("/verify/:reference", requireAuth, async (req, res) => {
+  if (!PAYSTACK_SECRET) return res.status(503).json({ error: "Payment service unavailable" });
+
   const { reference } = req.params;
   const db = getDb();
 
@@ -69,53 +89,56 @@ router.get("/verify/:reference", requireAuth, async (req, res) => {
     );
 
     const { status, amount, metadata, customer } = response.data.data;
-
     if (status !== "success") {
       return res.status(400).json({ error: "Payment not successful", status });
     }
 
-    const orderId = metadata?.orderId;
-    const amountPaid = amount / 100; // Convert back to naira
+    const orderId = metadata?.orderId || reference;
+    const amountPaidNaira = amount / 100;
 
-    // Update order in Firestore
-    if (orderId) {
-      const orderRef = db.collection("orders").doc(orderId);
-      const orderDoc = await orderRef.get();
+    const orderRef = db.collection("orders").doc(orderId);
+    const orderDoc = await orderRef.get();
+    if (!orderDoc.exists) return res.status(404).json({ error: "Order not found" });
 
-      if (orderDoc.exists) {
-        const order = orderDoc.data();
-        await orderRef.update({
-          paymentStatus: "paid",
-          status: "confirmed",
-          paystackReference: reference,
-          amountPaid,
-          paidAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          timeline: [...(order.timeline || []), {
-            status: "confirmed",
-            timestamp: new Date().toISOString(),
-            note: `Payment confirmed via Paystack. Ref: ${reference}`,
-          }],
-        });
+    const order = orderDoc.data();
 
-        // Mirror in user subcollection
-        await db
-          .collection("users")
-          .doc(order.userId)
-          .collection("orders")
-          .doc(orderId)
-          .update({ status: "confirmed", paymentStatus: "paid", updatedAt: new Date().toISOString() });
-      }
+    // Amount mismatch check (₦1 tolerance for rounding)
+    if (Math.abs(amountPaidNaira - order.total) > 1) {
+      console.error(`⚠️ Amount mismatch! Order ${orderId}: expected ₦${order.total}, paid ₦${amountPaidNaira}`);
+      await orderRef.update({
+        paymentStatus: "amount_mismatch",
+        amountPaid: amountPaidNaira,
+        updatedAt: new Date().toISOString(),
+        timeline: [...(order.timeline || []), {
+          status: "amount_mismatch",
+          timestamp: new Date().toISOString(),
+          note: `Amount mismatch: expected ₦${order.total}, got ₦${amountPaidNaira}`,
+        }],
+      });
+      return res.status(400).json({ error: "Payment amount does not match order total", paid: false });
     }
 
-    res.json({
-      success: true,
-      paid: true,
-      amountPaid,
-      reference,
-      orderId,
-      customerEmail: customer?.email,
+    // Confirm the order
+    await orderRef.update({
+      paymentStatus: "paid",
+      status: "confirmed",
+      paystackReference: reference,
+      amountPaid: amountPaidNaira,
+      paidAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      timeline: [...(order.timeline || []), {
+        status: "confirmed",
+        timestamp: new Date().toISOString(),
+        note: `Payment confirmed via Paystack. Ref: ${reference}`,
+      }],
     });
+
+    try {
+      await db.collection("users").doc(order.userId).collection("orders").doc(orderId)
+        .update({ status: "confirmed", paymentStatus: "paid", updatedAt: new Date().toISOString() });
+    } catch (_) {}
+
+    res.json({ success: true, paid: true, amountPaid: amountPaidNaira, reference, orderId, customerEmail: customer?.email });
   } catch (err) {
     console.error("Verify error:", err.response?.data || err.message);
     res.status(500).json({ error: "Payment verification failed" });
@@ -123,41 +146,46 @@ router.get("/verify/:reference", requireAuth, async (req, res) => {
 });
 
 // ─── POST /payments/webhook ───────────────────────────────────────────────────
-// Paystack sends events here — MUST be publicly accessible
-// Add this URL in: Paystack Dashboard → Settings → API Keys & Webhooks
 router.post("/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+  if (!PAYSTACK_SECRET) return res.sendStatus(503);
   const db = getDb();
 
-  // Verify webhook signature
-  const hash = crypto
-    .createHmac("sha512", PAYSTACK_SECRET)
-    .update(req.body)
-    .digest("hex");
-
+  const hash = crypto.createHmac("sha512", PAYSTACK_SECRET).update(req.body).digest("hex");
   if (hash !== req.headers["x-paystack-signature"]) {
     console.warn("⚠️  Invalid Paystack webhook signature");
     return res.status(400).send("Invalid signature");
   }
 
   const event = JSON.parse(req.body);
-  console.log("📨 Paystack webhook:", event.event);
 
   try {
     switch (event.event) {
       case "charge.success": {
         const { reference, amount, metadata, customer } = event.data;
-        const orderId = metadata?.orderId;
+        const orderId = metadata?.orderId || reference;
+        const amountPaidNaira = amount / 100;
 
         if (orderId) {
           const orderRef = db.collection("orders").doc(orderId);
           const orderDoc = await orderRef.get();
           if (orderDoc.exists) {
             const order = orderDoc.data();
+
+            // Amount mismatch
+            if (Math.abs(amountPaidNaira - order.total) > 1) {
+              console.error(`⚠️ Webhook mismatch: Order ${orderId}: expected ₦${order.total}, paid ₦${amountPaidNaira}`);
+              await orderRef.update({ paymentStatus: "amount_mismatch", amountPaid: amountPaidNaira, updatedAt: new Date().toISOString() });
+              break;
+            }
+
+            // Idempotent — skip if already paid
+            if (order.paymentStatus === "paid") break;
+
             await orderRef.update({
               paymentStatus: "paid",
               status: "confirmed",
               paystackReference: reference,
-              amountPaid: amount / 100,
+              amountPaid: amountPaidNaira,
               paidAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               timeline: [...(order.timeline || []), {
@@ -166,16 +194,17 @@ router.post("/webhook", express.raw({ type: "application/json" }), async (req, r
                 note: `Webhook: Payment confirmed. Ref: ${reference}`,
               }],
             });
+
+            try {
+              await db.collection("users").doc(order.userId).collection("orders").doc(orderId)
+                .update({ status: "confirmed", paymentStatus: "paid", updatedAt: new Date().toISOString() });
+            } catch (_) {}
           }
         }
 
-        // Log payment record
         await db.collection("payments").add({
-          reference,
-          orderId,
-          amount: amount / 100,
-          customerEmail: customer?.email,
-          event: "charge.success",
+          reference, orderId, amount: amountPaidNaira,
+          customerEmail: customer?.email, event: "charge.success",
           createdAt: new Date().toISOString(),
         });
         break;
@@ -183,7 +212,7 @@ router.post("/webhook", express.raw({ type: "application/json" }), async (req, r
 
       case "charge.failed": {
         const { reference, metadata } = event.data;
-        const orderId = metadata?.orderId;
+        const orderId = metadata?.orderId || reference;
         if (orderId) {
           await db.collection("orders").doc(orderId).update({
             paymentStatus: "failed",
@@ -195,9 +224,8 @@ router.post("/webhook", express.raw({ type: "application/json" }), async (req, r
 
       case "refund.processed": {
         const { transaction_reference, amount } = event.data;
-        await db.collection("payments").where("reference", "==", transaction_reference).get().then(snap => {
-          snap.forEach(doc => doc.ref.update({ refunded: true, refundAmount: amount / 100, refundedAt: new Date().toISOString() }));
-        });
+        const snap = await db.collection("payments").where("reference", "==", transaction_reference).get();
+        snap.forEach(doc => doc.ref.update({ refunded: true, refundAmount: amount / 100, refundedAt: new Date().toISOString() }));
         break;
       }
     }
@@ -205,7 +233,48 @@ router.post("/webhook", express.raw({ type: "application/json" }), async (req, r
     console.error("Webhook handler error:", err);
   }
 
-  res.sendStatus(200); // Always 200 to Paystack
+  res.sendStatus(200);
+});
+
+// ─── POST /payments/refund — Admin: Paystack refund ──────────────────────────
+router.post("/refund", requireAdmin, async (req, res) => {
+  if (!PAYSTACK_SECRET) return res.status(503).json({ error: "Payment service unavailable" });
+
+  const { orderId, reason } = req.body;
+  if (!orderId) return res.status(400).json({ error: "orderId is required" });
+
+  const db = getDb();
+  try {
+    const orderDoc = await db.collection("orders").doc(orderId).get();
+    if (!orderDoc.exists) return res.status(404).json({ error: "Order not found" });
+
+    const order = orderDoc.data();
+    if (order.paymentStatus !== "paid" || !order.paystackReference) {
+      return res.status(400).json({ error: "Order is not eligible for refund" });
+    }
+
+    const response = await axios.post(
+      `${PAYSTACK_BASE}/refund`,
+      { transaction: order.paystackReference, merchant_note: reason || "Customer refund" },
+      { headers: { Authorization: `Bearer ${PAYSTACK_SECRET}`, "Content-Type": "application/json" } }
+    );
+
+    await db.collection("orders").doc(orderId).update({
+      paymentStatus: "refund_pending",
+      refundReason: reason || "Admin-initiated refund",
+      updatedAt: new Date().toISOString(),
+      timeline: [...(order.timeline || []), {
+        status: "refund_pending",
+        timestamp: new Date().toISOString(),
+        note: `Refund initiated: ${reason || "Admin request"}`,
+      }],
+    });
+
+    res.json({ success: true, refund: response.data.data });
+  } catch (err) {
+    console.error("Refund error:", err.response?.data || err.message);
+    res.status(500).json({ error: "Refund failed" });
+  }
 });
 
 module.exports = router;

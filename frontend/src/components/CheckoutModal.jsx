@@ -1,17 +1,17 @@
 // frontend/src/components/CheckoutModal.jsx
 import { useState } from "react";
 import { orderAPI, paymentAPI } from "../api";
-import { C, S, DELIVERY_FEE, fmt } from "../constants";
+import { C, S, fmt } from "../constants";
 
-export default function CheckoutModal({ cart, user, onClose, onSuccess, toast }) {
+export default function CheckoutModal({ cart, user, deliveryFee, onClose, onSuccess, toast }) {
   const [form, setForm] = useState({ name: user?.displayName||"", phone:"", address:"", note:"", type:"delivery" });
   const [step, setStep] = useState("form"); // form | processing | done
   const [orderId, setOrderId] = useState("");
   const up = (k,v) => setForm(f => ({...f,[k]:v}));
 
   const subtotal = cart.reduce((s,i) => s+i.finalPrice*i.qty, 0);
-  const deliveryFee = form.type === "delivery" ? DELIVERY_FEE : 0;
-  const total = subtotal + deliveryFee;
+  const deliveryCharge = form.type === "delivery" ? deliveryFee : 0;
+  const total = subtotal + deliveryCharge;
 
   const handlePaystack = async () => {
     if (!form.name || !form.phone) { toast.show("Name and phone are required", "error"); return; }
@@ -30,9 +30,9 @@ export default function CheckoutModal({ cart, user, onClose, onSuccess, toast })
       const oid = order.orderId;
       setOrderId(oid);
 
-      const email = user?.email || `${form.phone.replace(/\D/g,"")}@kutunza.ng`;
+      const email = user?.email || `${form.phone.replace(/\D/g,"")}@guest.kutunzafoods.com`;
       const { authorizationUrl, reference } = await paymentAPI.initialize({
-        amount: total, email, orderId: oid,
+        orderId: oid, email,
         metadata: { customerName: form.name, customerPhone: form.phone }
       });
 
@@ -114,7 +114,7 @@ export default function CheckoutModal({ cart, user, onClose, onSuccess, toast })
             {cart.map(i => <div key={i.cartId} style={{ display:"flex",justifyContent:"space-between",color:C.textDim,fontSize:12,padding:"3px 0" }}><span>{i.name} {i.bowlSize?`(${i.bowlSize.label})`:""} ×{i.qty}</span><span>{fmt(i.finalPrice*i.qty)}</span></div>)}
             <div style={{ borderTop:`1px solid ${C.burg}25`,marginTop:8,paddingTop:8 }}>
               <div style={{ display:"flex",justifyContent:"space-between",color:C.textDim,fontSize:12,marginBottom:4 }}><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
-              {form.type==="delivery" && <div style={{ display:"flex",justifyContent:"space-between",color:C.textDim,fontSize:12,marginBottom:4 }}><span>Delivery</span><span>{fmt(DELIVERY_FEE)}</span></div>}
+              {form.type==="delivery" && <div style={{ display:"flex",justifyContent:"space-between",color:C.textDim,fontSize:12,marginBottom:4 }}><span>Delivery</span><span>{fmt(deliveryCharge)}</span></div>}
               <div style={{ display:"flex",justifyContent:"space-between",color:C.goldLight,fontSize:16,fontWeight:700,fontFamily:"'Cormorant Garamond', serif",marginTop:4 }}><span>Total</span><span>{fmt(total)}</span></div>
             </div>
           </div>

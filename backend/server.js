@@ -16,15 +16,29 @@ const menuRoutes = require("./routes/menu");
 const eventRoutes = require("./routes/events");
 const settingsRoutes = require("./routes/settings");
 
+// ─── Startup Validation ───────────────────────────────────────────────────────
+const REQUIRED_ENV = ["PAYSTACK_SECRET_KEY"];
+const RECOMMENDED_ENV = ["FIREBASE_PROJECT_ID", "FRONTEND_URL"];
+REQUIRED_ENV.forEach((key) => {
+  if (!process.env[key]) {
+    console.error(`❌ Missing required env var: ${key}`);
+    process.exit(1);
+  }
+});
+RECOMMENDED_ENV.forEach((key) => {
+  if (!process.env[key]) console.warn(`⚠️  Missing recommended env var: ${key}`);
+});
+
 // ─── Init Firebase ────────────────────────────────────────────────────────────
 initFirebase();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+const IS_PROD = process.env.NODE_ENV === "production";
 
 // ─── Security Middleware ──────────────────────────────────────────────────────
 app.use(helmet());
-app.use(morgan("dev"));
+app.use(morgan(IS_PROD ? "combined" : "dev"));
 
 // CORS — allow frontend
 app.use(cors({
@@ -55,8 +69,8 @@ app.use("/api/payments/initialize", paymentLimiter);
 // ─── Body Parsing ─────────────────────────────────────────────────────────────
 // Note: webhook route needs raw body — must come before express.json()
 app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
-app.use(express.json({ limit: "5mb" }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "100kb" }));
+app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get("/", (req, res) => {
@@ -68,7 +82,15 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/health", (req, res) => res.json({ status: "ok" }));
+app.get("/health", async (req, res) => {
+  try {
+    const db = require("./firebase").getDb();
+    await db.collection("settings").doc("app_config").get();
+    res.json({ status: "ok", firebase: "connected" });
+  } catch (err) {
+    res.status(503).json({ status: "degraded", firebase: "unreachable", error: err.message });
+  }
+});
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use("/api/auth", authRoutes);
@@ -87,9 +109,7 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);
   res.status(err.status || 500).json({
-    error: process.env.NODE_ENV === "production"
-      ? "Internal server error"
-      : err.message,
+    error: IS_PROD ? "Internal server error" : err.message,
   });
 });
 

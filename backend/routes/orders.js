@@ -23,7 +23,7 @@ const ORDER_STATUSES = [
 // ─── POST /orders — Place new order ──────────────────────────────────────────
 router.post("/", requireAuth, async (req, res) => {
   const db = getDb();
-  const { cart, deliveryType, address, phone, name, note, paystackReference } = req.body;
+  const { cart, deliveryType, address, phone, name, note } = req.body;
 
   if (!cart?.length) return res.status(400).json({ error: "Cart is empty" });
   if (!phone || !name) return res.status(400).json({ error: "Name and phone are required" });
@@ -44,31 +44,28 @@ router.post("/", requireAuth, async (req, res) => {
     orderId,
     userId: req.user.uid,
     userEmail: req.user.email || null,
-    customer: { name, phone, email: req.user.email || null },
+    customer: { name: name.slice(0, 120), phone: phone.slice(0, 20), email: req.user.email || null },
     cart: cart.map(i => ({
       id: i.id,
-      name: i.name,
-      qty: i.qty,
+      name: String(i.name).slice(0, 100),
+      qty: Math.min(Math.max(parseInt(i.qty) || 1, 1), 100),
       unitPrice: i.finalPrice,
       bowlSize: i.bowlSize?.label || "Single Portion",
       lineTotal: i.finalPrice * i.qty,
     })),
     deliveryType,       // "delivery" | "pickup"
-    address: address || null,
-    note: note || null,
+    address: address ? String(address).slice(0, 500) : null,
+    note: note ? String(note).slice(0, 500) : null,
     subtotal,
     deliveryFee,
     total,
-    status: paystackReference ? "confirmed" : "pending",
-    paymentStatus: paystackReference ? "paid" : "pending",
-    paystackReference: paystackReference || null,
+    status: "pending",
+    paymentStatus: "pending",
+    paystackReference: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     timeline: [
       { status: "pending", timestamp: new Date().toISOString(), note: "Order placed" },
-      ...(paystackReference
-        ? [{ status: "confirmed", timestamp: new Date().toISOString(), note: "Payment received" }]
-        : []),
     ],
   };
 
@@ -177,12 +174,13 @@ router.patch("/:id/status", requireAdmin, async (req, res) => {
 router.get("/", requireAdmin, async (req, res) => {
   const db = getDb();
   const { status, limit = 50, startAfter } = req.query;
+  const cappedLimit = Math.min(parseInt(limit) || 50, 200);
 
   try {
     let query = db.collection("orders").orderBy("createdAt", "desc");
 
     if (status) query = query.where("status", "==", status);
-    if (limit) query = query.limit(parseInt(limit));
+    query = query.limit(cappedLimit);
     if (startAfter) {
       const cursor = await db.collection("orders").doc(startAfter).get();
       if (cursor.exists) query = query.startAfter(cursor);
@@ -191,18 +189,20 @@ router.get("/", requireAdmin, async (req, res) => {
     const snap = await query.get();
     const orders = snap.docs.map(d => d.data());
 
-    // Summary stats
+    // Compute stats from aggregation counts (separate lightweight query)
+    const allSnap = await db.collection("orders").select("status", "paymentStatus", "total").get();
+    const allOrders = allSnap.docs.map(d => d.data());
     const stats = {
-      total: orders.length,
-      pending: orders.filter(o => o.status === "pending").length,
-      confirmed: orders.filter(o => o.status === "confirmed").length,
-      preparing: orders.filter(o => o.status === "preparing").length,
-      out_for_delivery: orders.filter(o => o.status === "out_for_delivery").length,
-      delivered: orders.filter(o => o.status === "delivered").length,
-      cancelled: orders.filter(o => o.status === "cancelled").length,
-      totalRevenue: orders
+      total: allOrders.length,
+      pending: allOrders.filter(o => o.status === "pending").length,
+      confirmed: allOrders.filter(o => o.status === "confirmed").length,
+      preparing: allOrders.filter(o => o.status === "preparing").length,
+      out_for_delivery: allOrders.filter(o => o.status === "out_for_delivery").length,
+      delivered: allOrders.filter(o => o.status === "delivered").length,
+      cancelled: allOrders.filter(o => o.status === "cancelled").length,
+      totalRevenue: allOrders
         .filter(o => o.paymentStatus === "paid")
-        .reduce((s, o) => s + o.total, 0),
+        .reduce((s, o) => s + (o.total || 0), 0),
     };
 
     res.json({ orders, stats });
@@ -224,26 +224,64 @@ router.patch("/:id/cancel", requireAuth, async (req, res) => {
     const order = doc.data();
     // Customer can only cancel their own pending orders
     const isOwner = order.userId === req.user.uid;
-    const isAdmin = (await db.collection("admins").doc(req.user.uid).get()).exists;
-    if (!isOwner && !isAdmin) return res.status(403).json({ error: "Access denied" });
-    if (isOwner && !isAdmin && order.status !== "pending") {
+    const isAdminUser = (await db.collection("admins").doc(req.user.uid).get()).exists;
+    if (!isOwner && !isAdminUser) return res.status(403).json({ error: "Access denied" });
+    if (isOwner && !isAdminUser && order.status !== "pending") {
       return res.status(400).json({ error: "Can only cancel pending orders" });
     }
 
-    await ref.update({
+    const updateData = {
       status: "cancelled",
-      cancellationReason: reason || "Cancelled by customer",
+      cancellationReason: reason ? String(reason).slice(0, 500) : "Cancelled by customer",
       updatedAt: new Date().toISOString(),
       timeline: [...(order.timeline || []), {
         status: "cancelled",
         timestamp: new Date().toISOString(),
-        note: reason || "Cancelled by customer",
+        note: reason ? String(reason).slice(0, 500) : "Cancelled by customer",
       }],
-    });
+    };
 
-    res.json({ success: true });
+    // If order was paid, mark for refund
+    if (order.paymentStatus === "paid") {
+      updateData.paymentStatus = "refund_pending";
+    }
+
+    await ref.update(updateData);
+
+    res.json({ success: true, refundPending: order.paymentStatus === "paid" });
   } catch (err) {
     res.status(500).json({ error: "Failed to cancel order" });
+  }
+});
+
+// ─── POST /orders/cleanup — Admin: expire abandoned pending orders ───────────
+// Orders that stay "pending" + payment "pending" for > 1 hour are expired
+router.post("/cleanup", requireAdmin, async (req, res) => {
+  const db = getDb();
+  const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString(); // 1 hour ago
+
+  try {
+    const snap = await db.collection("orders")
+      .where("status", "==", "pending")
+      .where("paymentStatus", "==", "pending")
+      .where("createdAt", "<", cutoff)
+      .limit(100)
+      .get();
+
+    const batch = db.batch();
+    snap.docs.forEach((doc) => {
+      batch.update(doc.ref, {
+        status: "expired",
+        paymentStatus: "expired",
+        updatedAt: new Date().toISOString(),
+      });
+    });
+    await batch.commit();
+
+    res.json({ success: true, expired: snap.size });
+  } catch (err) {
+    console.error("Cleanup error:", err);
+    res.status(500).json({ error: "Cleanup failed" });
   }
 });
 

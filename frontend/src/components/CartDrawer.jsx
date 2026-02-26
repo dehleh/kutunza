@@ -1,9 +1,9 @@
 // frontend/src/components/CartDrawer.jsx
-import { C, S, DELIVERY_FEE, fmt } from "../constants";
+import { C, S, fmt } from "../constants";
 
-export default function CartDrawer({ cart, onClose, onRemove, onQty, onCheckout }) {
+export default function CartDrawer({ cart, deliveryFee, onClose, onRemove, onQty, onCheckout }) {
   const subtotal = cart.reduce((s,i) => s+i.finalPrice*i.qty, 0);
-  const total = subtotal + (cart.length > 0 ? DELIVERY_FEE : 0);
+  const total = subtotal + (cart.length > 0 ? deliveryFee : 0);
   return (
     <div style={{ position:"fixed",inset:0,zIndex:500,display:"flex" }}>
       <div onClick={onClose} style={{ flex:1,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(4px)" }}/>
@@ -37,7 +37,7 @@ export default function CartDrawer({ cart, onClose, onRemove, onQty, onCheckout 
         {cart.length > 0 && (
           <div style={{ padding:22,borderTop:`1px solid ${C.burg}30` }}>
             <div style={{ display:"flex",justifyContent:"space-between",color:C.textDim,fontSize:12,marginBottom:6 }}><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
-            <div style={{ display:"flex",justifyContent:"space-between",color:C.textDim,fontSize:12,marginBottom:14 }}><span>Delivery</span><span style={{color:C.goldLight}}>{fmt(DELIVERY_FEE)}</span></div>
+            <div style={{ display:"flex",justifyContent:"space-between",color:C.textDim,fontSize:12,marginBottom:14 }}><span>Delivery</span><span style={{color:C.goldLight}}>{fmt(deliveryFee)}</span></div>
             <div style={{ display:"flex",justifyContent:"space-between",color:C.cream,fontSize:18,fontFamily:"'Cormorant Garamond', serif",fontWeight:700,marginBottom:16 }}><span>Total</span><span style={{color:C.goldLight}}>{fmt(total)}</span></div>
             <button onClick={onCheckout} style={{ ...S.btn("gold"),width:"100%",padding:"13px" }}>Checkout →</button>
           </div>

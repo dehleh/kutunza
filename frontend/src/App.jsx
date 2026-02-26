@@ -1,7 +1,7 @@
 // frontend/src/App.jsx
 import { useState, useEffect } from "react";
 import { onAuthChange, logout } from "./firebase";
-import { authAPI, menuAPI } from "./api";
+import { authAPI, menuAPI, settingsAPI } from "./api";
 import {
   C, S, LOGO, BOWL_SIZES, BOWL_ELIGIBLE, DEFAULT_MENU,
   DELIVERY_FEE, fmt, newId,
@@ -30,6 +30,7 @@ export default function App() {
   const [showAuth, setShowAuth] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [addedId, setAddedId] = useState(null);
+  const [deliveryFee, setDeliveryFee] = useState(DELIVERY_FEE);
   const toast = useToast();
 
   useEffect(() => {
@@ -48,6 +49,11 @@ export default function App() {
       } else {
         setIsAdminUser(false);
       }
+      // Fetch settings (public) for delivery fee
+      try {
+        const { settings } = await settingsAPI.get();
+        if (settings?.deliveryFee) setDeliveryFee(settings.deliveryFee);
+      } catch { /* use default */ }
     });
     return unsub;
   }, []);
@@ -272,7 +278,7 @@ export default function App() {
             boxShadow: "0 4px 16px rgba(0,0,0,0.4)", display: "flex", alignItems: "center", gap: 8, zIndex: 400,
           }}
         >
-          Cart · {cartCount} · {fmt(cart.reduce((s, i) => s + i.finalPrice * i.qty, 0))}
+          Cart · {cartCount} · {fmt(cart.reduce((s, i) => s + i.finalPrice * i.qty, 0) + deliveryFee)}
         </button>
       )}
 
@@ -281,6 +287,7 @@ export default function App() {
       {showCart && (
         <CartDrawer
           cart={cart}
+          deliveryFee={deliveryFee}
           onClose={() => setShowCart(false)}
           onRemove={(id) => setCart(p => p.filter(i => i.cartId !== id))}
           onQty={(id, d) => setCart(p => p.map(i => i.cartId === id ? { ...i, qty: Math.max(0, i.qty + d) } : i).filter(i => i.qty > 0))}
@@ -289,7 +296,7 @@ export default function App() {
       )}
       {showCheckout && (
         <CheckoutModal
-          cart={cart} user={user}
+          cart={cart} user={user} deliveryFee={deliveryFee}
           onClose={() => setShowCheckout(false)}
           onSuccess={(oid) => { setCart([]); toast.show(`Order ${oid} confirmed!`, "success"); }}
           toast={toast}

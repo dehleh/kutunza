@@ -25,18 +25,18 @@ router.post("/", requireAuth, async (req, res) => {
     const eventData = {
       eventId,
       userId: req.user.uid,
-      name,
-      email,
-      phone,
-      eventType,
+      name: String(name).slice(0, 120),
+      email: String(email).slice(0, 120),
+      phone: String(phone).slice(0, 20),
+      eventType: String(eventType).slice(0, 60),
       date,
       time: time || "",
-      location,
-      guests: parseInt(guests) || 0,
-      theme: theme || "",
-      budget: budget || "",
-      menu: menu || "",
-      notes: notes || "",
+      location: String(location).slice(0, 300),
+      guests: Math.min(parseInt(guests) || 0, 10000),
+      theme: String(theme || "").slice(0, 200),
+      budget: String(budget || "").slice(0, 100),
+      menu: String(menu || "").slice(0, 1000),
+      notes: String(notes || "").slice(0, 1000),
       suggestMenu: suggestMenu || false,
       status: "pending", // pending | reviewed | confirmed | completed | cancelled
       createdAt: new Date().toISOString(),
@@ -76,24 +76,25 @@ router.get("/my", requireAuth, async (req, res) => {
 router.get("/", requireAdmin, async (req, res) => {
   const db = getDb();
   const { status, limit = 50 } = req.query;
+  const cappedLimit = Math.min(parseInt(limit) || 50, 200);
 
   try {
-    let query = db.collection("events").orderBy("createdAt", "desc").limit(parseInt(limit));
+    let query = db.collection("events").orderBy("createdAt", "desc").limit(cappedLimit);
     if (status) query = query.where("status", "==", status);
 
     const snap = await query.get();
     const events = snap.docs.map(d => d.data());
 
-    // Stats
-    const allSnap = await db.collection("events").get();
-    const allEvents = allSnap.docs.map(d => d.data());
+    // Stats from lightweight select query
+    const allSnap = await db.collection("events").select("status").get();
+    const allStatuses = allSnap.docs.map(d => d.data().status);
     const stats = {
-      total: allEvents.length,
-      pending: allEvents.filter(e => e.status === "pending").length,
-      reviewed: allEvents.filter(e => e.status === "reviewed").length,
-      confirmed: allEvents.filter(e => e.status === "confirmed").length,
-      completed: allEvents.filter(e => e.status === "completed").length,
-      cancelled: allEvents.filter(e => e.status === "cancelled").length,
+      total: allStatuses.length,
+      pending: allStatuses.filter(s => s === "pending").length,
+      reviewed: allStatuses.filter(s => s === "reviewed").length,
+      confirmed: allStatuses.filter(s => s === "confirmed").length,
+      completed: allStatuses.filter(s => s === "completed").length,
+      cancelled: allStatuses.filter(s => s === "cancelled").length,
     };
 
     res.json({ events, stats, count: events.length });

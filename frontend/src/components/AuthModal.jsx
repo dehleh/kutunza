@@ -40,7 +40,8 @@ export default function AuthModal({ onClose, onSuccess }) {
         await loginWithEmail(form.email, form.password);
       } else if (mode === "register") {
         if (form.password !== form.confirm) { setError("Passwords do not match"); setLoading(false); return; }
-        if (form.password.length < 6) { setError("Password must be at least 6 characters"); setLoading(false); return; }
+        if (form.password.length < 8) { setError("Password must be at least 8 characters"); setLoading(false); return; }
+        if (!/[A-Z]/.test(form.password) || !/[0-9]/.test(form.password)) { setError("Password needs at least 1 uppercase letter and 1 number"); setLoading(false); return; }
         await registerWithEmail(form.email, form.password, form.name);
         try { await authAPI.createProfile({ name: form.name, email: form.email }); } catch(_) {}
       } else if (mode === "reset") {
