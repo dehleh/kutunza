@@ -8,13 +8,16 @@ export default function Users() {
   const { user: me } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [admins, setAdmins] = useState(new Set()); // track admin UIDs locally
+  const [admins, setAdmins] = useState(new Set());
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const res = await authAPI.getUsers(200);
-      setUsers(res.users || []);
+      const list = res.users || [];
+      setUsers(list);
+      // Populate admin set from server response
+      setAdmins(new Set(list.filter(u => u.isAdmin).map(u => u.uid)));
     } catch (err) {
       toast(err.message, "error");
     } finally {

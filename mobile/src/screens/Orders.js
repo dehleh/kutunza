@@ -112,7 +112,7 @@ export default function OrdersScreen({ navigation }) {
     return (
       <View style={st.card}>
         <View style={S.rowBetween}>
-          <Text style={st.orderId}>#{(o.id || "").slice(-6).toUpperCase()}</Text>
+          <Text style={st.orderId}>#{(o.orderId || "").slice(-6).toUpperCase()}</Text>
           <View style={[st.statusBadge, { borderColor: statusColor }]}>
             <Text style={[st.statusText, { color: statusColor }]}>
               {(o.status || "").toUpperCase()}
@@ -122,19 +122,19 @@ export default function OrdersScreen({ navigation }) {
 
         {date ? <Text style={st.date}>{date}</Text> : null}
 
-        {(o.items || []).slice(0, 3).map((item, idx) => (
+        {(o.cart || []).slice(0, 3).map((item, idx) => (
           <Text key={idx} style={st.itemLine} numberOfLines={1}>
             {item.name} {item.bowlSize ? `(${item.bowlSize})` : ""} ×{item.qty}
           </Text>
         ))}
-        {(o.items || []).length > 3 && (
-          <Text style={st.itemLine}>+{o.items.length - 3} more…</Text>
+        {(o.cart || []).length > 3 && (
+          <Text style={st.itemLine}>+{o.cart.length - 3} more…</Text>
         )}
 
         <View style={[S.rowBetween, { marginTop: 10 }]}>
           <Text style={st.total}>{fmt(o.total || 0)}</Text>
           {canCancel && (
-            <TouchableOpacity onPress={() => handleCancel(o.id)} style={S.btnGhost}>
+            <TouchableOpacity onPress={() => handleCancel(o.orderId)} style={S.btnGhost}>
               <Text style={S.btnGhostText}>Cancel</Text>
             </TouchableOpacity>
           )}
@@ -147,7 +147,7 @@ export default function OrdersScreen({ navigation }) {
     <View style={S.screen}>
       <FlatList
         data={orders}
-        keyExtractor={(o) => o.id}
+        keyExtractor={(o) => o.orderId || o.id}
         renderItem={renderOrder}
         contentContainerStyle={{ padding: 14, paddingBottom: 30 }}
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}

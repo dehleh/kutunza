@@ -1,5 +1,5 @@
 // mobile/src/screens/Checkout.js
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -34,7 +34,19 @@ export default function CheckoutScreen({ route, navigation }) {
   const [done, setDone] = useState(false);
 
   const orderRef = useRef(null);
+  const payTimerRef = useRef(null);
   const total = subtotal + (mode === "delivery" ? deliveryFee : 0);
+
+  // M12 — Payment WebView timeout (5 minutes)
+  useEffect(() => {
+    if (payUrl) {
+      payTimerRef.current = setTimeout(() => {
+        setPayUrl(null);
+        Alert.alert("Payment timeout", "Payment took too long. Please try again from your orders.");
+      }, 5 * 60 * 1000);
+    }
+    return () => { if (payTimerRef.current) clearTimeout(payTimerRef.current); };
+  }, [payUrl]);
 
   // ─── Place order & init payment ────────────────────────────────────────────
   const handlePay = async () => {
@@ -49,24 +61,26 @@ export default function CheckoutScreen({ route, navigation }) {
 
     setBusy(true);
     try {
-      const items = cart.map((c) => ({
+      // Map cart to backend's expected format: { id, name, qty, finalPrice, bowlSize }
+      const cartItems = cart.map((c) => ({
         id: c.id,
         name: c.name,
-        price: c.price,
         qty: c.qty,
-        bowlSize: c.bowlSize || null,
-        bowlMultiplier: c.bowlMultiplier || 1,
+        finalPrice: c.price * (c.bowlMultiplier || 1),
+        bowlSize: c.bowlSize
+          ? { label: c.bowlLabel || c.bowlSize }
+          : null,
         categoryId: c.categoryId,
       }));
 
-      // 1. Place order
+      // 1. Place order (fields match backend/routes/orders.js)
       const order = await orderAPI.place({
-        items,
-        customerName: name.trim(),
-        customerPhone: phone.trim(),
-        deliveryAddress: mode === "delivery" ? address.trim() : "",
-        notes: notes.trim(),
-        deliveryMode: mode,
+        cart: cartItems,
+        name: name.trim(),
+        phone: phone.trim(),
+        address: mode === "delivery" ? address.trim() : "",
+        deliveryType: mode,
+        note: notes.trim(),
       });
 
       orderRef.current = order.orderId || order.id;

@@ -64,17 +64,21 @@ router.patch("/:catId/item/:itemId/toggle", requireAdmin, async (req, res) => {
   const db = getDb();
   try {
     const ref = db.collection("menu").doc(req.params.catId);
-    const doc = await ref.get();
-    if (!doc.exists) return res.status(404).json({ error: "Category not found" });
+    // B18 — use transaction to prevent read-modify-write race
+    await db.runTransaction(async (t) => {
+      const doc = await t.get(ref);
+      if (!doc.exists) throw Object.assign(new Error("Category not found"), { status: 404 });
 
-    const cat = doc.data();
-    const items = cat.items.map(i =>
-      i.id === req.params.itemId ? { ...i, active: !i.active } : i
-    );
-    await ref.update({ items, updatedAt: new Date().toISOString() });
+      const cat = doc.data();
+      const items = cat.items.map(i =>
+        i.id === req.params.itemId ? { ...i, active: !i.active } : i
+      );
+      t.update(ref, { items, updatedAt: new Date().toISOString() });
+    });
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: "Toggle failed" });
+    const status = err.status || 500;
+    res.status(status).json({ error: err.message || "Toggle failed" });
   }
 });
 

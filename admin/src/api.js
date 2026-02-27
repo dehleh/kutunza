@@ -66,7 +66,7 @@ export const settingsAPI = {
 
 // Payments
 export const paymentAPI = {
-  refund: (ref) => api.post(`/payments/refund/${ref}`),
+  refund: (orderId, reason) => api.post("/payments/refund", { orderId, reason }),
 };
 
 export default api;

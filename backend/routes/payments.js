@@ -5,20 +5,25 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const crypto = require("crypto");
+const admin = require("firebase-admin");
 const { getDb } = require("../firebase");
 const { requireAuth, requireAdmin } = require("../middleware/auth");
 
-const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
+const FieldValue = admin.firestore.FieldValue;
+
+// Read at request-time so key rotation doesn't require restart
+const getPaystackSecret = () => process.env.PAYSTACK_SECRET_KEY;
 const PAYSTACK_BASE = "https://api.paystack.co";
 
 // Startup validation
-if (!PAYSTACK_SECRET) {
+if (!process.env.PAYSTACK_SECRET_KEY) {
   console.error("❌ PAYSTACK_SECRET_KEY is not set. Payment routes will fail.");
 }
 
 // ─── POST /payments/initialize ───────────────────────────────────────────────
 // Amount is read from the stored order — never trusted from the client
 router.post("/initialize", requireAuth, async (req, res) => {
+  const PAYSTACK_SECRET = getPaystackSecret();
   if (!PAYSTACK_SECRET) return res.status(503).json({ error: "Payment service unavailable" });
 
   const { orderId, email, metadata } = req.body;
@@ -45,7 +50,7 @@ router.post("/initialize", requireAuth, async (req, res) => {
         email,
         reference: orderId,
         currency: "NGN",
-        callback_url: `${process.env.FRONTEND_URL || "http://localhost:5173"}/payment/callback`,
+        callback_url: `${process.env.ADMIN_URL || process.env.FRONTEND_URL || "http://localhost:5174"}/payment/callback`,
         metadata: {
           orderId,
           userId: req.user.uid,
@@ -77,6 +82,7 @@ router.post("/initialize", requireAuth, async (req, res) => {
 // ─── GET /payments/verify/:reference ─────────────────────────────────────────
 // Validates that the paid amount matches the order total
 router.get("/verify/:reference", requireAuth, async (req, res) => {
+  const PAYSTACK_SECRET = getPaystackSecret();
   if (!PAYSTACK_SECRET) return res.status(503).json({ error: "Payment service unavailable" });
 
   const { reference } = req.params;
@@ -102,6 +108,11 @@ router.get("/verify/:reference", requireAuth, async (req, res) => {
 
     const order = orderDoc.data();
 
+    // Idempotency: skip if already paid
+    if (order.paymentStatus === "paid") {
+      return res.json({ success: true, paid: true, amountPaid: order.amountPaid, reference, orderId, alreadyPaid: true });
+    }
+
     // Amount mismatch check (₦1 tolerance for rounding)
     if (Math.abs(amountPaidNaira - order.total) > 1) {
       console.error(`⚠️ Amount mismatch! Order ${orderId}: expected ₦${order.total}, paid ₦${amountPaidNaira}`);
@@ -109,16 +120,16 @@ router.get("/verify/:reference", requireAuth, async (req, res) => {
         paymentStatus: "amount_mismatch",
         amountPaid: amountPaidNaira,
         updatedAt: new Date().toISOString(),
-        timeline: [...(order.timeline || []), {
+        timeline: FieldValue.arrayUnion({
           status: "amount_mismatch",
           timestamp: new Date().toISOString(),
           note: `Amount mismatch: expected ₦${order.total}, got ₦${amountPaidNaira}`,
-        }],
+        }),
       });
       return res.status(400).json({ error: "Payment amount does not match order total", paid: false });
     }
 
-    // Confirm the order
+    // Confirm the order — use FieldValue.arrayUnion to prevent race condition
     await orderRef.update({
       paymentStatus: "paid",
       status: "confirmed",
@@ -126,11 +137,11 @@ router.get("/verify/:reference", requireAuth, async (req, res) => {
       amountPaid: amountPaidNaira,
       paidAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      timeline: [...(order.timeline || []), {
+      timeline: FieldValue.arrayUnion({
         status: "confirmed",
         timestamp: new Date().toISOString(),
         note: `Payment confirmed via Paystack. Ref: ${reference}`,
-      }],
+      }),
     });
 
     try {
@@ -147,6 +158,7 @@ router.get("/verify/:reference", requireAuth, async (req, res) => {
 
 // ─── POST /payments/webhook ───────────────────────────────────────────────────
 router.post("/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+  const PAYSTACK_SECRET = getPaystackSecret();
   if (!PAYSTACK_SECRET) return res.sendStatus(503);
   const db = getDb();
 
@@ -188,11 +200,11 @@ router.post("/webhook", express.raw({ type: "application/json" }), async (req, r
               amountPaid: amountPaidNaira,
               paidAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
-              timeline: [...(order.timeline || []), {
+              timeline: FieldValue.arrayUnion({
                 status: "confirmed",
                 timestamp: new Date().toISOString(),
                 note: `Webhook: Payment confirmed. Ref: ${reference}`,
-              }],
+              }),
             });
 
             try {
@@ -238,6 +250,7 @@ router.post("/webhook", express.raw({ type: "application/json" }), async (req, r
 
 // ─── POST /payments/refund — Admin: Paystack refund ──────────────────────────
 router.post("/refund", requireAdmin, async (req, res) => {
+  const PAYSTACK_SECRET = getPaystackSecret();
   if (!PAYSTACK_SECRET) return res.status(503).json({ error: "Payment service unavailable" });
 
   const { orderId, reason } = req.body;
@@ -263,11 +276,11 @@ router.post("/refund", requireAdmin, async (req, res) => {
       paymentStatus: "refund_pending",
       refundReason: reason || "Admin-initiated refund",
       updatedAt: new Date().toISOString(),
-      timeline: [...(order.timeline || []), {
+      timeline: FieldValue.arrayUnion({
         status: "refund_pending",
         timestamp: new Date().toISOString(),
         note: `Refund initiated: ${reason || "Admin request"}`,
-      }],
+      }),
     });
 
     res.json({ success: true, refund: response.data.data });

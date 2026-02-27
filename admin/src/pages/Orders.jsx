@@ -177,9 +177,7 @@ export default function Orders() {
             </div>
 
             {/* Status update */}
-            <div style={{ marginTop: 16
-
-, borderTop: "1px solid rgba(114,47,55,.3)", paddingTop: 16 }}>
+            <div style={{ marginTop: 16, borderTop: "1px solid rgba(114,47,55,.3)", paddingTop: 16 }}>
               <div className="form-label">Update Status</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {STATUSES.filter((s) => s !== detail.status).map((s) => (

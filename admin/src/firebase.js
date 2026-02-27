@@ -16,6 +16,13 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+// A1 — Startup env validation
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.error(
+    "❌ Firebase config missing! Set VITE_FIREBASE_API_KEY and VITE_FIREBASE_PROJECT_ID in your .env file."
+  );
+}
+
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 

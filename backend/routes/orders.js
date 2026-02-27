@@ -189,21 +189,27 @@ router.get("/", requireAdmin, async (req, res) => {
     const snap = await query.get();
     const orders = snap.docs.map(d => d.data());
 
-    // Compute stats from aggregation counts (separate lightweight query)
-    const allSnap = await db.collection("orders").select("status", "paymentStatus", "total").get();
-    const allOrders = allSnap.docs.map(d => d.data());
-    const stats = {
-      total: allOrders.length,
-      pending: allOrders.filter(o => o.status === "pending").length,
-      confirmed: allOrders.filter(o => o.status === "confirmed").length,
-      preparing: allOrders.filter(o => o.status === "preparing").length,
-      out_for_delivery: allOrders.filter(o => o.status === "out_for_delivery").length,
-      delivered: allOrders.filter(o => o.status === "delivered").length,
-      cancelled: allOrders.filter(o => o.status === "cancelled").length,
-      totalRevenue: allOrders
-        .filter(o => o.paymentStatus === "paid")
-        .reduce((s, o) => s + (o.total || 0), 0),
-    };
+    // Use stats counter doc if available, otherwise lightweight select
+    let stats;
+    const statsDoc = await db.collection("counters").doc("order_stats").get();
+    if (statsDoc.exists) {
+      stats = statsDoc.data();
+    } else {
+      const allSnap = await db.collection("orders").select("status", "paymentStatus", "total").get();
+      const allOrders = allSnap.docs.map(d => d.data());
+      stats = {
+        total: allOrders.length,
+        pending: allOrders.filter(o => o.status === "pending").length,
+        confirmed: allOrders.filter(o => o.status === "confirmed").length,
+        preparing: allOrders.filter(o => o.status === "preparing").length,
+        out_for_delivery: allOrders.filter(o => o.status === "out_for_delivery").length,
+        delivered: allOrders.filter(o => o.status === "delivered").length,
+        cancelled: allOrders.filter(o => o.status === "cancelled").length,
+        totalRevenue: allOrders
+          .filter(o => o.paymentStatus === "paid")
+          .reduce((s, o) => s + (o.total || 0), 0),
+      };
+    }
 
     res.json({ orders, stats });
   } catch (err) {
@@ -234,11 +240,6 @@ router.patch("/:id/cancel", requireAuth, async (req, res) => {
       status: "cancelled",
       cancellationReason: reason ? String(reason).slice(0, 500) : "Cancelled by customer",
       updatedAt: new Date().toISOString(),
-      timeline: [...(order.timeline || []), {
-        status: "cancelled",
-        timestamp: new Date().toISOString(),
-        note: reason ? String(reason).slice(0, 500) : "Cancelled by customer",
-      }],
     };
 
     // If order was paid, mark for refund
@@ -246,7 +247,15 @@ router.patch("/:id/cancel", requireAuth, async (req, res) => {
       updateData.paymentStatus = "refund_pending";
     }
 
-    await ref.update(updateData);
+    // Use arrayUnion for timeline to prevent race conditions
+    await ref.update({
+      ...updateData,
+      timeline: FieldValue.arrayUnion({
+        status: "cancelled",
+        timestamp: new Date().toISOString(),
+        note: reason ? String(reason).slice(0, 500) : "Cancelled by customer",
+      }),
+    });
 
     res.json({ success: true, refundPending: order.paymentStatus === "paid" });
   } catch (err) {

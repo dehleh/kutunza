@@ -12,8 +12,9 @@ export default function Settings() {
 
   useEffect(() => {
     settingsAPI.get().then((res) => {
-      setDeliveryFee(res.deliveryFee ?? 1500);
-      setMinOrder(res.minOrder ?? 2000);
+      const s = res.settings || res;
+      setDeliveryFee(s.deliveryFee ?? 1500);
+      setMinOrder(s.minOrderAmount ?? s.minOrder ?? 2000);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 

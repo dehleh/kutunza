@@ -2,12 +2,14 @@
 // Axios-based API client — mirrors the web frontend api.js
 
 import axios from "axios";
+import Constants from "expo-constants";
+import NetInfo from "@react-native-community/netinfo";
 import { getIdToken } from "./firebase";
 
-// TODO: Update this to your deployed backend URL
-const BASE_URL = __DEV__
+const extra = Constants.expoConfig?.extra ?? {};
+const BASE_URL = extra.apiUrl || (__DEV__
   ? "http://10.0.2.2:4000/api" // Android emulator → host machine
-  : "https://your-backend.up.railway.app/api";
+  : "https://api.kutunzafoods.com/api");
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -15,8 +17,13 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// Attach Firebase token automatically
+// M5 — Offline check before every request
 api.interceptors.request.use(async (config) => {
+  const state = await NetInfo.fetch();
+  if (!state.isConnected) {
+    return Promise.reject(new Error("No internet connection. Please check your network and try again."));
+  }
+  // Attach Firebase token automatically
   const token = await getIdToken();
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;

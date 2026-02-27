@@ -56,12 +56,29 @@ router.get("/profile", requireAuth, async (req, res) => {
 // ─── GET /auth/admin/users — Admin: list all users ───────────────────────────
 router.get("/admin/users", requireAdmin, async (req, res) => {
   const db = getDb();
-  const { limit = 50 } = req.query;
+  const { limit = 50, after } = req.query;
   const cappedLimit = Math.min(parseInt(limit) || 50, 200);
   try {
-    const snap = await db.collection("users").orderBy("createdAt", "desc").limit(cappedLimit).get();
-    const users = snap.docs.map(d => d.data());
-    res.json({ users, count: users.length });
+    let query = db.collection("users").orderBy("createdAt", "desc");
+    // B9 — cursor-based pagination
+    if (after) {
+      const cursor = await db.collection("users").doc(after).get();
+      if (cursor.exists) query = query.startAfter(cursor);
+    }
+    query = query.limit(cappedLimit);
+    const snap = await query.get();
+
+    // A2 — enrich users with isAdmin flag
+    const adminSnap = await db.collection("admins").get();
+    const adminSet = new Set(adminSnap.docs.map(d => d.id));
+
+    const users = snap.docs.map(d => {
+      const u = d.data();
+      return { ...u, isAdmin: adminSet.has(u.uid || d.id) };
+    });
+
+    const lastDoc = snap.docs[snap.docs.length - 1];
+    res.json({ users, count: users.length, nextCursor: lastDoc?.id || null });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch users" });
   }

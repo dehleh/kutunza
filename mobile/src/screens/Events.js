@@ -51,16 +51,17 @@ export default function EventsScreen() {
     }
     setBusy(true);
     try {
+      // Field names match backend/routes/events.js
       await eventAPI.submit({
         name: name.trim(),
         email: email.trim(),
         phone: phone.trim(),
         eventType,
         date: date.trim(),
-        guestCount: parseInt(guests, 10) || 0,
-        venue: venue.trim(),
-        budgetTier,
-        menuNotes: menuNotes.trim(),
+        guests: parseInt(guests, 10) || 0,
+        location: venue.trim(),
+        budget: budgetTier,
+        notes: menuNotes.trim(),
       });
       setDone(true);
     } catch (err) {

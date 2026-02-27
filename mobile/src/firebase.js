@@ -13,19 +13,27 @@ import {
   updateProfile,
 } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SETUP: Replace with your Firebase project config.
-// Firebase Console → Project Settings → Your Apps → Web
+// Firebase config from app.config.js extra / env vars
 // ─────────────────────────────────────────────────────────────────────────────
+const extra = Constants.expoConfig?.extra ?? {};
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "000000000000",
-  appId: "1:000000000000:web:abcdef1234567890",
+  apiKey: extra.fbApiKey,
+  authDomain: extra.fbAuthDomain,
+  projectId: extra.fbProjectId,
+  storageBucket: extra.fbStorageBucket,
+  messagingSenderId: extra.fbMessagingSenderId,
+  appId: extra.fbAppId,
 };
+
+// Validate at startup
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.error(
+    "❌ Firebase config missing. Set EXPO_PUBLIC_FB_* env vars in .env. See .env.example."
+  );
+}
 
 const app = initializeApp(firebaseConfig);
 

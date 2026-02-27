@@ -3,6 +3,7 @@ import React from "react";
 import { StatusBar } from "expo-status-bar";
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import * as Linking from "expo-linking";
 import { AuthProvider } from "./src/context/Auth";
 import { CartProvider } from "./src/context/Cart";
 import RootNavigator from "./src/navigation";
@@ -22,12 +23,29 @@ const navTheme = {
   },
 };
 
+// M9 — Deep linking configuration
+const linking = {
+  prefixes: [Linking.createURL("/"), "kutunza://"],
+  config: {
+    screens: {
+      Main: {
+        screens: {
+          OrdersTab: { screens: { OrdersHome: "orders" } },
+          MenuTab: { screens: { MenuHome: "menu" } },
+          CartTab: { screens: { CartHome: "cart", Checkout: "checkout" } },
+          ProfileTab: { screens: { ProfileHome: "profile" } },
+        },
+      },
+    },
+  },
+};
+
 export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
         <CartProvider>
-          <NavigationContainer theme={navTheme}>
+          <NavigationContainer theme={navTheme} linking={linking}>
             <StatusBar style="light" />
             <RootNavigator />
           </NavigationContainer>

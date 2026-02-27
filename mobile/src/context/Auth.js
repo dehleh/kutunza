@@ -24,8 +24,10 @@ export function AuthProvider({ children }) {
       setUser(fbUser);
       if (fbUser) {
         try {
-          const token = await fbUser.getIdTokenResult(true);
-          setIsAdmin(!!token.claims.admin);
+          // Admin is tracked via Firestore admins collection, not custom claims.
+          // Check via the server profile endpoint.
+          const res = await authAPI.getProfile();
+          setIsAdmin(!!res?.isAdmin);
         } catch {
           setIsAdmin(false);
         }

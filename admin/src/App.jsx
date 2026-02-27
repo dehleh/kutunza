@@ -1,5 +1,5 @@
 // admin/src/App.jsx
-import React, { useState, useEffect, createContext, useContext, useCallback } from "react";
+import React, { useState, useEffect, createContext, useContext, useCallback, useRef } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { onAuthChange, logout, auth } from "./firebase";
 import { authAPI } from "./api";
@@ -9,6 +9,29 @@ import Menu from "./pages/Menu";
 import Events from "./pages/Events";
 import Settings from "./pages/Settings";
 import Users from "./pages/Users";
+
+// ─── Error Boundary (A5) ─────────────────────────────────────────────────────
+class ErrorBoundary extends React.Component {
+  state = { hasError: false, error: null };
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, info) {
+    console.error("ErrorBoundary caught:", error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 40, textAlign: "center" }}>
+          <h2>Something went wrong</h2>
+          <p style={{ color: "#888", marginBottom: 16 }}>{this.state.error?.message}</p>
+          <button onClick={() => window.location.reload()} className="btn btn-burg">Reload</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // ─── Auth context ────────────────────────────────────────────────────────────
 const AuthCtx = createContext(null);
@@ -20,10 +43,14 @@ export const useToast = () => useContext(ToastCtx);
 
 function ToastProvider({ children }) {
   const [toast, setToast] = useState(null);
+  const timerRef = useRef(null);
   const show = useCallback((msg, type = "success") => {
+    if (timerRef.current) clearTimeout(timerRef.current);
     setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
+    timerRef.current = setTimeout(() => setToast(null), 3000);
   }, []);
+  // Cleanup on unmount (A8)
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
   return (
     <ToastCtx.Provider value={show}>
       {children}
@@ -115,30 +142,32 @@ export default function App() {
 
   return (
     <AuthCtx.Provider value={{ user, isAdmin }}>
-      <ToastProvider>
-        <Routes>
-          <Route path="/login" element={user ? <Navigate to="/orders" /> : <Login />} />
-          <Route
-            path="/*"
-            element={
-              user ? (
-                <Layout>
-                  <Routes>
-                    <Route path="/orders" element={<Orders />} />
-                    <Route path="/menu" element={<Menu />} />
-                    <Route path="/events" element={<Events />} />
-                    <Route path="/users" element={<Users />} />
-                    <Route path="/settings" element={<Settings />} />
-                    <Route path="*" element={<Navigate to="/orders" />} />
-                  </Routes>
-                </Layout>
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-        </Routes>
-      </ToastProvider>
+      <ErrorBoundary>
+        <ToastProvider>
+          <Routes>
+            <Route path="/login" element={user ? <Navigate to="/orders" /> : <Login />} />
+            <Route
+              path="/*"
+              element={
+                user ? (
+                  <Layout>
+                    <Routes>
+                      <Route path="/orders" element={<Orders />} />
+                      <Route path="/menu" element={<Menu />} />
+                      <Route path="/events" element={<Events />} />
+                      <Route path="/users" element={<Users />} />
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="*" element={<Navigate to="/orders" />} />
+                    </Routes>
+                  </Layout>
+                ) : (
+                  <Navigate to="/login" />
+                )
+              }
+            />
+          </Routes>
+        </ToastProvider>
+      </ErrorBoundary>
     </AuthCtx.Provider>
   );
 }
