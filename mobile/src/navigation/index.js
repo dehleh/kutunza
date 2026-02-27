@@ -12,6 +12,7 @@ import MenuScreen from "../screens/Menu";
 import CartScreen from "../screens/Cart";
 import CheckoutScreen from "../screens/Checkout";
 import OrdersScreen from "../screens/Orders";
+import OrderDetailScreen from "../screens/OrderDetail";
 import EventsScreen from "../screens/Events";
 import AuthScreen from "../screens/Auth";
 import ProfileScreen from "../screens/Profile";
@@ -49,6 +50,7 @@ function OrdersStack() {
   return (
     <Stack.Navigator screenOptions={screenOpts}>
       <Stack.Screen name="OrdersHome" component={OrdersScreen} options={{ title: "My Orders" }} />
+      <Stack.Screen name="OrderDetail" component={OrderDetailScreen} options={{ title: "Order Details" }} />
     </Stack.Navigator>
   );
 }

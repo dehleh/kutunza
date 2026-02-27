@@ -16,6 +16,7 @@ import { menuAPI } from "../api";
 import { useCart } from "../context/Cart";
 import MenuCard from "../components/MenuCard";
 import BowlPicker from "../components/BowlPicker";
+import * as Haptics from "expo-haptics";
 
 export default function MenuScreen() {
   const { cart, addToCart } = useCart();
@@ -68,6 +69,7 @@ export default function MenuScreen() {
   // ─── Add handler (opens bowl picker if eligible) ───────────────────────────
   const handleAdd = useCallback(
     (item) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       if (BOWL_ELIGIBLE.includes(activeCat)) {
         setBowlItem({ ...item, categoryId: activeCat });
       } else {
@@ -80,6 +82,7 @@ export default function MenuScreen() {
   const handleBowlSelect = useCallback(
     (size) => {
       if (!bowlItem) return;
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       addToCart({
         ...bowlItem,
         bowlSize: size.id,
@@ -140,6 +143,9 @@ export default function MenuScreen() {
       </ScrollView>
 
       {/* Items grid */}
+      {search.trim() && items.length > 0 && (
+        <Text style={st.resultCount}>{items.length} result{items.length !== 1 ? "s" : ""}</Text>
+      )}
       <FlatList
         data={items}
         keyExtractor={(i) => i.id}
@@ -150,6 +156,7 @@ export default function MenuScreen() {
             item={item}
             onAdd={handleAdd}
             inCartQty={cartQty(item.id)}
+            categoryId={activeCat}
           />
         )}
         ListEmptyComponent={
@@ -199,4 +206,5 @@ const st = StyleSheet.create({
   pillLabel: { color: C.textDim, fontSize: 12, fontWeight: "600" },
   pillLabelActive: { color: C.gold },
   grid: { paddingHorizontal: 8, paddingBottom: 20 },
+  resultCount: { color: C.textDim, fontSize: 11, paddingHorizontal: 14, marginBottom: 4 },
 });

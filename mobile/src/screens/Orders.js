@@ -133,11 +133,13 @@ export default function OrdersScreen({ navigation }) {
 
         <View style={[S.rowBetween, { marginTop: 10 }]}>
           <Text style={st.total}>{fmt(o.total || 0)}</Text>
-          {canCancel && (
-            <TouchableOpacity onPress={() => handleCancel(o.orderId)} style={S.btnGhost}>
-              <Text style={S.btnGhostText}>Cancel</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            style={st.viewBtn}
+            onPress={() => navigation.navigate("OrderDetail", { order: o })}
+          >
+            <Text style={st.viewBtnText}>View</Text>
+            <Ionicons name="chevron-forward" size={14} color={C.gold} />
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -189,4 +191,6 @@ const st = StyleSheet.create({
   statusText: { fontSize: 10, fontWeight: "700" },
   itemLine: { color: C.text, fontSize: 12, marginTop: 3 },
   total: { color: C.gold, fontSize: 16, fontWeight: "700" },
+  viewBtn: { flexDirection: "row", alignItems: "center", gap: 4 },
+  viewBtnText: { color: C.gold, fontSize: 12, fontWeight: "600" },
 });

@@ -13,6 +13,7 @@ import {
   Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { C, S, fmt } from "../theme";
 import { EVENT_TYPES, MENU_SUGGESTIONS } from "../data";
 import { eventAPI } from "../api";
@@ -32,6 +33,8 @@ export default function EventsScreen() {
   const [phone, setPhone] = useState("");
   const [eventType, setEventType] = useState("");
   const [date, setDate] = useState("");
+  const [dateObj, setDateObj] = useState(new Date(Date.now() + 7 * 86400000)); // default: 1 week out
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [guests, setGuests] = useState("");
   const [venue, setVenue] = useState("");
   const [budgetTier, setBudgetTier] = useState("");
@@ -142,7 +145,38 @@ export default function EventsScreen() {
             </View>
 
             <Text style={[S.label, { marginTop: 14 }]}>Event Date</Text>
-            <TextInput style={S.input} value={date} onChangeText={setDate} placeholderTextColor={C.textDim} placeholder="e.g. 15 March 2026" />
+            <TouchableOpacity
+              style={st.dateBtn}
+              onPress={() => setShowDatePicker(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="calendar" size={18} color={date ? C.cream : C.textDim} />
+              <Text style={[st.dateBtnText, !date && { color: C.textDim }]}>
+                {date || "Select a date"}
+              </Text>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={dateObj}
+                mode="date"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                minimumDate={new Date()}
+                themeVariant="dark"
+                onChange={(event, selectedDate) => {
+                  setShowDatePicker(Platform.OS === "ios");
+                  if (selectedDate) {
+                    setDateObj(selectedDate);
+                    setDate(
+                      selectedDate.toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })
+                    );
+                  }
+                }}
+              />
+            )}
 
             <Text style={[S.label, { marginTop: 14 }]}>Guest Count</Text>
             <TextInput style={S.input} value={guests} onChangeText={setGuests} keyboardType="number-pad" placeholderTextColor={C.textDim} placeholder="e.g. 200" />
@@ -240,6 +274,19 @@ const st = StyleSheet.create({
   stepLabel: { color: C.textDim, fontSize: 10, marginTop: 4 },
   stepLabelActive: { color: C.gold },
   section: { marginTop: 4 },
+  dateBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: C.bg2,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: C.burg + "40",
+    marginTop: 4,
+  },
+  dateBtnText: { color: C.cream, fontSize: 14 },
   chipWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 },
   chip: {
     paddingHorizontal: 14,

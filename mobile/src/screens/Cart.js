@@ -22,7 +22,8 @@ export default function CartScreen({ navigation }) {
 
   useEffect(() => {
     settingsAPI.get().then((r) => {
-      if (r?.deliveryFee) setDeliveryFee(r.deliveryFee);
+      const fee = r?.settings?.deliveryFee ?? r?.deliveryFee;
+      if (fee) setDeliveryFee(fee);
     }).catch(() => {});
   }, []);
 
@@ -108,15 +109,15 @@ export default function CartScreen({ navigation }) {
         </View>
         <View style={S.rowBetween}>
           <Text style={st.sumLabel}>Delivery</Text>
-          <Text style={st.sumValue}>{fmt(deliveryFee)}</Text>
+          <Text style={[st.sumValue, { color: C.textDim, fontStyle: "italic", fontSize: 12 }]}>calculated at checkout</Text>
         </View>
         <View style={[S.divider, { marginVertical: 8 }]} />
         <View style={S.rowBetween}>
           <Text style={[st.sumLabel, { color: C.cream, fontWeight: "700" }]}>
-            Total
+            Subtotal
           </Text>
           <Text style={[st.sumValue, { color: C.gold, fontSize: 18 }]}>
-            {fmt(total)}
+            {fmt(subtotal)}
           </Text>
         </View>
 

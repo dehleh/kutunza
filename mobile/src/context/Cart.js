@@ -7,7 +7,13 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import { LayoutAnimation, Platform, UIManager } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+// Enable LayoutAnimation on Android
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const STORAGE_KEY = "@kutunza_cart";
 const Ctx = createContext(null);
@@ -36,7 +42,7 @@ export function CartProvider({ children }) {
 
   // ─── Actions ───────────────────────────────────────────────────────────────
   const addToCart = useCallback((item) => {
-    // item = { id, name, price, qty, bowlSize?, bowlMultiplier?, categoryId }
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setCart((prev) => {
       const key = item.bowlSize ? `${item.id}_${item.bowlSize}` : item.id;
       const idx = prev.findIndex(
@@ -52,6 +58,7 @@ export function CartProvider({ children }) {
   }, []);
 
   const removeFromCart = useCallback((id, bowlSize) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setCart((prev) =>
       prev.filter((c) => {
         const key = c.bowlSize ? `${c.id}_${c.bowlSize}` : c.id;
