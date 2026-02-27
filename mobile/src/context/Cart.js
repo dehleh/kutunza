@@ -7,13 +7,8 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import { LayoutAnimation, Platform, UIManager } from "react-native";
+import { LayoutAnimation } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-// Enable LayoutAnimation on Android
-if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 const STORAGE_KEY = "@kutunza_cart";
 const Ctx = createContext(null);

@@ -1,5 +1,6 @@
 // mobile/App.js
 import React from "react";
+import { registerRootComponent } from "expo";
 import { StatusBar } from "expo-status-bar";
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -40,7 +41,7 @@ const linking = {
   },
 };
 
-export default function App() {
+function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
@@ -54,3 +55,5 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
+
+registerRootComponent(App);
