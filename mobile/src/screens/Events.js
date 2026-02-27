@@ -161,7 +161,7 @@ export default function EventsScreen() {
                 mode="date"
                 display={Platform.OS === "ios" ? "spinner" : "default"}
                 minimumDate={new Date()}
-                themeVariant="dark"
+                themeVariant="light"
                 onChange={(event, selectedDate) => {
                   setShowDatePicker(Platform.OS === "ios");
                   if (selectedDate) {
@@ -266,13 +266,13 @@ const st = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: C.burg + "60",
+    borderColor: C.border,
   },
-  stepDotActive: { backgroundColor: C.burg, borderColor: C.gold + "60" },
+  stepDotActive: { backgroundColor: C.burg, borderColor: C.burg },
   stepNum: { color: C.textDim, fontSize: 12, fontWeight: "700" },
-  stepNumActive: { color: C.gold },
+  stepNumActive: { color: "#fff" },
   stepLabel: { color: C.textDim, fontSize: 10, marginTop: 4 },
-  stepLabelActive: { color: C.gold },
+  stepLabelActive: { color: C.burg },
   section: { marginTop: 4 },
   dateBtn: {
     flexDirection: "row",
@@ -283,7 +283,7 @@ const st = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 14,
     borderWidth: 1,
-    borderColor: C.burg + "40",
+    borderColor: C.border,
     marginTop: 4,
   },
   dateBtnText: { color: C.cream, fontSize: 14 },
@@ -294,22 +294,22 @@ const st = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: C.bg2,
     borderWidth: 1,
-    borderColor: C.burg + "40",
+    borderColor: C.border,
   },
-  chipActive: { backgroundColor: C.burg, borderColor: C.gold + "60" },
-  chipText: { color: C.textDim, fontSize: 12, fontWeight: "500" },
-  chipTextActive: { color: C.gold },
+  chipActive: { backgroundColor: C.burg, borderColor: C.burg },
+  chipText: { color: C.text, fontSize: 12, fontWeight: "500" },
+  chipTextActive: { color: "#fff" },
   tierCard: {
     backgroundColor: C.bg2,
     borderRadius: 12,
     padding: 16,
     marginTop: 10,
     borderWidth: 1,
-    borderColor: C.burg + "30",
+    borderColor: C.border,
   },
-  tierCardActive: { borderColor: C.gold + "80", backgroundColor: C.burg + "40" },
+  tierCardActive: { borderColor: C.burg, backgroundColor: C.burg + "10" },
   tierTitle: { color: C.cream, fontSize: 14, fontWeight: "600" },
-  tierTitleActive: { color: C.gold },
+  tierTitleActive: { color: C.burg },
   tierItems: { color: C.textDim, fontSize: 11, marginTop: 6, lineHeight: 18 },
   doneTitle: { color: C.cream, fontSize: 22, fontWeight: "700", marginTop: 16 },
   doneDesc: { color: C.textDim, fontSize: 14, textAlign: "center", marginTop: 8, lineHeight: 20 },

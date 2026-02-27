@@ -1,25 +1,36 @@
 // mobile/src/theme.js
-// Centralised design tokens — colours, spacing, typography, shared styles
+// Centralised design tokens — light, sleek theme with gold & burgundy accents
 
 import { StyleSheet } from "react-native";
 
 export const C = {
-  bg:        "#1a0a0a",
-  bg2:       "#2a1218",
-  bg3:       "#3a1a22",
-  burg:      "#5a1a2a",
-  burgDark:  "#3a0e1a",
-  burgDeep:  "#2a0a12",
-  gold:      "#b8942f",
-  goldLight: "#d4b86a",
-  goldPale:  "#e8d5a0",
-  cream:     "#f5e6c8",
-  text:      "#ddd0c0",
-  textDim:   "#8a7a6a",
-  green:     "#1a4a2a",
-  greenLight:"#4aaa6a",
-  red:       "#4a1a1a",
-  redLight:  "#ea6a6a",
+  // ─── Backgrounds (light) ──────────────────────────────────────────────
+  bg:        "#FFFFFF",       // main background — white
+  bg2:       "#F6F6F8",       // card / section background — very light grey
+  bg3:       "#EEEEF2",       // input / well background
+
+  // ─── Brand ────────────────────────────────────────────────────────────
+  burg:      "#6B2037",       // burgundy primary
+  burgDark:  "#4A1426",
+  burgDeep:  "#370E1C",
+  gold:      "#B8942F",       // gold accent
+  goldLight: "#D4B86A",
+  goldPale:  "#F5ECD4",
+
+  // ─── Text ─────────────────────────────────────────────────────────────
+  cream:     "#1E1E24",       // primary text — near-black
+  text:      "#3A3A44",       // secondary text — dark grey
+  textDim:   "#8E8E9A",       // muted / caption
+
+  // ─── Semantic ─────────────────────────────────────────────────────────
+  green:     "#D5F5E3",
+  greenLight:"#28A745",
+  red:       "#FDE8E8",
+  redLight:  "#E04848",
+
+  // ─── Misc ─────────────────────────────────────────────────────────────
+  border:    "#E4E4EA",       // subtle borders
+  shadow:    "#00000010",     // card shadows
 };
 
 export const FONT = {
@@ -41,15 +52,15 @@ export const S = StyleSheet.create({
   // Section title
   sectionTitle: {
     color: C.cream,
-    fontSize: 20,
+    fontSize: 18,
     ...FONT.bold,
     marginBottom: 12,
   },
   // Form label
   label: {
-    color: C.goldLight,
+    color: C.text,
     fontSize: 11,
-    letterSpacing: 1.5,
+    letterSpacing: 1.2,
     textTransform: "uppercase",
     marginBottom: 6,
     ...FONT.semi,
@@ -58,8 +69,8 @@ export const S = StyleSheet.create({
   input: {
     backgroundColor: C.bg3,
     borderWidth: 1,
-    borderColor: C.burg + "80",
-    borderRadius: 8,
+    borderColor: C.border,
+    borderRadius: 10,
     color: C.cream,
     fontSize: 14,
     paddingHorizontal: 14,
@@ -67,31 +78,31 @@ export const S = StyleSheet.create({
   },
   // Primary button (gold)
   btnGold: {
-    backgroundColor: C.goldLight,
-    borderRadius: 8,
+    backgroundColor: C.burg,
+    borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
   },
   btnGoldText: {
-    color: C.bg,
+    color: "#fff",
     fontSize: 13,
     ...FONT.bold,
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
-  // Secondary button (burgundy)
+  // Secondary button (outline)
   btnBurg: {
-    backgroundColor: C.burg,
-    borderWidth: 1,
-    borderColor: C.goldLight + "30",
-    borderRadius: 8,
+    backgroundColor: C.bg,
+    borderWidth: 1.5,
+    borderColor: C.burg,
+    borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
   },
   btnBurgText: {
-    color: C.goldLight,
+    color: C.burg,
     fontSize: 13,
     ...FONT.bold,
     letterSpacing: 0.8,
@@ -100,8 +111,8 @@ export const S = StyleSheet.create({
   // Ghost button
   btnGhost: {
     borderWidth: 1,
-    borderColor: C.burg + "60",
-    borderRadius: 8,
+    borderColor: C.border,
+    borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
@@ -115,8 +126,8 @@ export const S = StyleSheet.create({
   card: {
     backgroundColor: C.bg2,
     borderWidth: 1,
-    borderColor: C.burg + "30",
-    borderRadius: 12,
+    borderColor: C.border,
+    borderRadius: 14,
     padding: 16,
   },
   // Centered empty state
@@ -137,7 +148,7 @@ export const S = StyleSheet.create({
   // Divider
   divider: {
     height: 1,
-    backgroundColor: C.burg + "30",
+    backgroundColor: C.border,
     marginVertical: 12,
   },
   // Row helpers

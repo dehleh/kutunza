@@ -22,10 +22,11 @@ const Stack = createNativeStackNavigator();
 
 // ─── Shared stack header style ───────────────────────────────────────────────
 const screenOpts = {
-  headerStyle: { backgroundColor: C.bg2 },
-  headerTintColor: C.gold,
-  headerTitleStyle: { fontWeight: "600", fontSize: 16 },
+  headerStyle: { backgroundColor: C.bg },
+  headerTintColor: C.burg,
+  headerTitleStyle: { fontWeight: "600", fontSize: 16, color: C.cream },
   contentStyle: { backgroundColor: C.bg },
+  headerShadowVisible: false,
 };
 
 // ─── Per-tab stacks ──────────────────────────────────────────────────────────
@@ -88,7 +89,7 @@ const bs = StyleSheet.create({
     position: "absolute",
     top: -4,
     right: -10,
-    backgroundColor: C.gold,
+    backgroundColor: C.burg,
     borderRadius: 9,
     minWidth: 18,
     height: 18,
@@ -96,7 +97,7 @@ const bs = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 4,
   },
-  badgeText: { color: C.bg, fontSize: 10, fontWeight: "700" },
+  badgeText: { color: "#fff", fontSize: 10, fontWeight: "700" },
 });
 
 // ─── Tab icons ───────────────────────────────────────────────────────────────
@@ -120,14 +121,15 @@ export default function RootNavigator() {
             {route.name === "Cart" && <CartBadge />}
           </View>
         ),
-        tabBarActiveTintColor: C.gold,
+        tabBarActiveTintColor: C.burg,
         tabBarInactiveTintColor: C.textDim,
         tabBarStyle: {
-          backgroundColor: C.bg2,
-          borderTopColor: C.burg + "40",
+          backgroundColor: C.bg,
+          borderTopColor: C.border,
           borderTopWidth: 1,
           paddingBottom: 4,
           height: 58,
+          elevation: 0,
         },
         tabBarLabelStyle: { fontSize: 10, fontWeight: "600" },
       })}

@@ -96,7 +96,7 @@ export default function OrdersScreen({ navigation }) {
   if (loading) {
     return (
       <View style={S.screen}>
-        <ActivityIndicator color={C.gold} size="large" style={{ marginTop: 40 }} />
+        <ActivityIndicator color={C.burg} size="large" style={{ marginTop: 40 }} />
       </View>
     );
   }
@@ -138,7 +138,7 @@ export default function OrdersScreen({ navigation }) {
             onPress={() => navigation.navigate("OrderDetail", { order: o })}
           >
             <Text style={st.viewBtnText}>View</Text>
-            <Ionicons name="chevron-forward" size={14} color={C.gold} />
+            <Ionicons name="chevron-forward" size={14} color={C.burg} />
           </TouchableOpacity>
         </View>
       </View>
@@ -157,8 +157,8 @@ export default function OrdersScreen({ navigation }) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => { setRefreshing(true); fetchOrders(); }}
-            tintColor={C.gold}
-            colors={[C.gold]}
+            tintColor={C.burg}
+            colors={[C.burg]}
           />
         }
         ListEmptyComponent={
@@ -175,10 +175,10 @@ export default function OrdersScreen({ navigation }) {
 const st = StyleSheet.create({
   card: {
     backgroundColor: C.bg2,
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: C.burg + "30",
+    borderColor: C.border,
   },
   orderId: { color: C.textDim, fontSize: 11, fontWeight: "600" },
   date: { color: C.textDim, fontSize: 11, marginTop: 2, marginBottom: 8 },
@@ -190,7 +190,7 @@ const st = StyleSheet.create({
   },
   statusText: { fontSize: 10, fontWeight: "700" },
   itemLine: { color: C.text, fontSize: 12, marginTop: 3 },
-  total: { color: C.gold, fontSize: 16, fontWeight: "700" },
+  total: { color: C.burg, fontSize: 16, fontWeight: "700" },
   viewBtn: { flexDirection: "row", alignItems: "center", gap: 4 },
-  viewBtnText: { color: C.gold, fontSize: 12, fontWeight: "600" },
+  viewBtnText: { color: C.burg, fontSize: 12, fontWeight: "600" },
 });

@@ -1,6 +1,5 @@
 // mobile/App.js
 import React from "react";
-import { registerRootComponent } from "expo";
 import { StatusBar } from "expo-status-bar";
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -12,15 +11,15 @@ import { C } from "./src/theme";
 
 const navTheme = {
   ...DefaultTheme,
-  dark: true,
+  dark: false,
   colors: {
     ...DefaultTheme.colors,
-    primary: C.gold,
+    primary: C.burg,
     background: C.bg,
-    card: C.bg2,
+    card: C.bg,
     text: C.cream,
-    border: C.burg + "40",
-    notification: C.gold,
+    border: C.border,
+    notification: C.burg,
   },
 };
 
@@ -41,13 +40,13 @@ const linking = {
   },
 };
 
-function App() {
+export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
         <CartProvider>
           <NavigationContainer theme={navTheme} linking={linking}>
-            <StatusBar style="light" />
+            <StatusBar style="dark" />
             <RootNavigator />
           </NavigationContainer>
         </CartProvider>
@@ -55,5 +54,3 @@ function App() {
     </SafeAreaProvider>
   );
 }
-
-registerRootComponent(App);

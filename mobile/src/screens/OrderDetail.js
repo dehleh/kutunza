@@ -118,7 +118,7 @@ export default function OrderDetailScreen({ route, navigation }) {
         )}
         <View style={[S.rowBetween, { marginTop: 8 }]}>
           <Text style={[st.sumLabel, { color: C.cream, fontWeight: "700" }]}>Total</Text>
-          <Text style={{ color: C.gold, fontSize: 17, fontWeight: "700" }}>{fmt(order.total || 0)}</Text>
+          <Text style={{ color: C.burg, fontSize: 17, fontWeight: "700" }}>{fmt(order.total || 0)}</Text>
         </View>
       </View>
 
@@ -186,7 +186,7 @@ const st = StyleSheet.create({
   },
   statusLabel: { fontSize: 16, fontWeight: "700" },
   orderId: { color: C.textDim, fontSize: 11, fontWeight: "600", marginTop: 2 },
-  totalBig: { color: C.gold, fontSize: 20, fontWeight: "700" },
+  totalBig: { color: C.burg, fontSize: 20, fontWeight: "700" },
   sectionHead: { color: C.cream, fontSize: 14, fontWeight: "700", marginBottom: 12 },
   infoRow: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
   infoLabel: { color: C.textDim, fontSize: 12, width: 70 },
@@ -194,13 +194,13 @@ const st = StyleSheet.create({
   itemRow: { flexDirection: "row", alignItems: "center", paddingVertical: 8 },
   itemName: { color: C.cream, fontSize: 13, fontWeight: "600" },
   itemQty: { color: C.textDim, fontSize: 11, marginTop: 2 },
-  itemPrice: { color: C.gold, fontSize: 13, fontWeight: "600", marginLeft: 12 },
+  itemPrice: { color: C.burg, fontSize: 13, fontWeight: "600", marginLeft: 12 },
   sumLabel: { color: C.textDim, fontSize: 13 },
   sumValue: { color: C.cream, fontSize: 13, fontWeight: "600" },
   timelineRow: { flexDirection: "row", minHeight: 52 },
   timelineTrack: { width: 24, alignItems: "center" },
   timelineDot: { width: 12, height: 12, borderRadius: 6, marginTop: 2 },
-  timelineLine: { width: 2, flex: 1, backgroundColor: C.burg + "60", marginVertical: 4 },
+  timelineLine: { width: 2, flex: 1, backgroundColor: C.border, marginVertical: 4 },
   timelineContent: { flex: 1, paddingLeft: 10, paddingBottom: 16 },
   timelineStatus: { fontSize: 13, fontWeight: "600" },
   timelineTime: { color: C.textDim, fontSize: 11, marginTop: 2 },

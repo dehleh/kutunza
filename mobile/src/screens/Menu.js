@@ -99,7 +99,7 @@ export default function MenuScreen() {
   if (loading) {
     return (
       <View style={S.screen}>
-        <ActivityIndicator color={C.gold} size="large" style={{ marginTop: 40 }} />
+        <ActivityIndicator color={C.burg} size="large" style={{ marginTop: 40 }} />
       </View>
     );
   }
@@ -119,28 +119,30 @@ export default function MenuScreen() {
       </View>
 
       {/* Category pills */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={st.pills}
-      >
-        {categories.map((cat) => {
-          const active = cat.id === activeCat;
-          return (
-            <TouchableOpacity
-              key={cat.id}
-              style={[st.pill, active && st.pillActive]}
-              onPress={() => setActiveCat(cat.id)}
-              activeOpacity={0.7}
-            >
-              <Text style={st.pillIcon}>{cat.icon}</Text>
-              <Text style={[st.pillLabel, active && st.pillLabelActive]}>
-                {cat.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+      <View style={st.pillsWrap}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={st.pills}
+        >
+          {categories.map((cat) => {
+            const active = cat.id === activeCat;
+            return (
+              <TouchableOpacity
+                key={cat.id}
+                style={[st.pill, active && st.pillActive]}
+                onPress={() => setActiveCat(cat.id)}
+                activeOpacity={0.7}
+              >
+                <Text style={st.pillIcon}>{cat.icon}</Text>
+                <Text style={[st.pillLabel, active && st.pillLabelActive]}>
+                  {cat.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       {/* Items grid */}
       {search.trim() && items.length > 0 && (
@@ -188,7 +190,11 @@ const st = StyleSheet.create({
     color: C.cream,
     fontSize: 14,
     borderWidth: 1,
-    borderColor: C.burg + "40",
+    borderColor: C.border,
+  },
+  pillsWrap: {
+    backgroundColor: C.bg,
+    zIndex: 1,
   },
   pills: { paddingHorizontal: 10, paddingVertical: 10, gap: 8 },
   pill: {
@@ -199,12 +205,12 @@ const st = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: C.bg2,
     borderWidth: 1,
-    borderColor: C.burg + "30",
+    borderColor: C.border,
   },
-  pillActive: { backgroundColor: C.burg, borderColor: C.gold + "60" },
+  pillActive: { backgroundColor: C.burg, borderColor: C.burg },
   pillIcon: { fontSize: 14, marginRight: 6 },
-  pillLabel: { color: C.textDim, fontSize: 12, fontWeight: "600" },
-  pillLabelActive: { color: C.gold },
-  grid: { paddingHorizontal: 8, paddingBottom: 20 },
+  pillLabel: { color: C.text, fontSize: 12, fontWeight: "600" },
+  pillLabelActive: { color: "#fff" },
+  grid: { paddingHorizontal: 8, paddingBottom: 20, paddingTop: 4 },
   resultCount: { color: C.textDim, fontSize: 11, paddingHorizontal: 14, marginBottom: 4 },
 });

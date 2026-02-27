@@ -116,7 +116,7 @@ export default function CartScreen({ navigation }) {
           <Text style={[st.sumLabel, { color: C.cream, fontWeight: "700" }]}>
             Subtotal
           </Text>
-          <Text style={[st.sumValue, { color: C.gold, fontSize: 18 }]}>
+          <Text style={[st.sumValue, { color: C.burg, fontSize: 18 }]}>
             {fmt(subtotal)}
           </Text>
         </View>
@@ -139,21 +139,23 @@ const st = StyleSheet.create({
   info: { flex: 1 },
   itemName: { color: C.cream, fontSize: 14, fontWeight: "600" },
   bowl: { color: C.textDim, fontSize: 11, marginTop: 2 },
-  linePrice: { color: C.gold, fontSize: 13, fontWeight: "600", marginTop: 4 },
+  linePrice: { color: C.burg, fontSize: 13, fontWeight: "600", marginTop: 4 },
   qtyRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   qtyBtn: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: C.burg,
+    backgroundColor: C.bg3,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    borderColor: C.border,
   },
   qtyText: { color: C.cream, fontSize: 14, fontWeight: "700", minWidth: 20, textAlign: "center" },
   summary: {
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: C.burg + "40",
+    borderTopColor: C.border,
     backgroundColor: C.bg2,
   },
   sumLabel: { color: C.textDim, fontSize: 13 },

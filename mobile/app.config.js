@@ -7,11 +7,12 @@ export default ({ config }) => ({
   slug: "kutunza-gourmet",
   version: "1.0.0",
   orientation: "portrait",
-  userInterfaceStyle: "dark",
+  userInterfaceStyle: "light",
   scheme: "kutunza",
   icon: "./assets/icon.png",
   splash: {
-    backgroundColor: "#1a0a0a",
+    image: "./assets/splash.jpg",
+    backgroundColor: "#FFFFFF",
     resizeMode: "contain",
   },
   ios: {
@@ -23,7 +24,8 @@ export default ({ config }) => ({
     package: "com.kutunza.gourmet",
     versionCode: 1,
     adaptiveIcon: {
-      backgroundColor: "#1a0a0a",
+      foregroundImage: "./assets/icon.png",
+      backgroundColor: "#FFFFFF",
     },
   },
   updates: {

@@ -111,7 +111,7 @@ export default function ProfileScreen({ navigation }) {
     <ScrollView
       style={S.screen}
       contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} colors={[C.gold]} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.burg} colors={[C.burg]} />}
     >
       {/* Avatar area */}
       <View style={st.header}>
@@ -125,7 +125,7 @@ export default function ProfileScreen({ navigation }) {
           <Text style={st.email}>{user.email}</Text>
           {isAdmin && (
             <View style={st.adminBadge}>
-              <Ionicons name="shield-checkmark" size={12} color={C.gold} />
+              <Ionicons name="shield-checkmark" size={12} color={C.burg} />
               <Text style={st.adminText}>Admin</Text>
             </View>
           )}
@@ -149,7 +149,7 @@ export default function ProfileScreen({ navigation }) {
           </View>
         </View>
       )}
-      {loading && <ActivityIndicator color={C.gold} style={{ marginVertical: 16 }} />}
+      {loading && <ActivityIndicator color={C.burg} style={{ marginVertical: 16 }} />}
 
       <View style={S.divider} />
 
@@ -252,7 +252,7 @@ const st = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarText: { color: C.gold, fontSize: 22, fontWeight: "700" },
+  avatarText: { color: "#fff", fontSize: 22, fontWeight: "700" },
   displayName: { color: C.cream, fontSize: 18, fontWeight: "600" },
   email: { color: C.textDim, fontSize: 13, marginTop: 2 },
   adminBadge: {
@@ -261,7 +261,7 @@ const st = StyleSheet.create({
     gap: 4,
     marginTop: 4,
   },
-  adminText: { color: C.gold, fontSize: 11, fontWeight: "600" },
+  adminText: { color: C.burg, fontSize: 11, fontWeight: "600" },
   statsRow: {
     flexDirection: "row",
     gap: 10,
@@ -274,9 +274,9 @@ const st = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: C.burg + "30",
+    borderColor: C.border,
   },
-  statNum: { color: C.gold, fontSize: 18, fontWeight: "700" },
+  statNum: { color: C.burg, fontSize: 18, fontWeight: "700" },
   statLabel: { color: C.textDim, fontSize: 10, marginTop: 4, textTransform: "uppercase", letterSpacing: 0.5 },
   editSection: {
     backgroundColor: C.bg2,
@@ -284,7 +284,7 @@ const st = StyleSheet.create({
     padding: 16,
     marginVertical: 12,
     borderWidth: 1,
-    borderColor: C.burg + "30",
+    borderColor: C.border,
   },
   sectionTitle: { color: C.cream, fontSize: 16, fontWeight: "600", marginBottom: 12 },
   menuItem: {

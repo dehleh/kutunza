@@ -165,7 +165,7 @@ export default function CheckoutScreen({ route, navigation }) {
           onNavigationStateChange={handleWebViewNav}
           startInLoadingState
           renderLoading={() => (
-            <ActivityIndicator color={C.gold} size="large" style={StyleSheet.absoluteFill} />
+            <ActivityIndicator color={C.burg} size="large" style={StyleSheet.absoluteFill} />
           )}
         />
       </View>
@@ -257,7 +257,7 @@ export default function CheckoutScreen({ route, navigation }) {
           )}
           <View style={[S.rowBetween, { marginTop: 8 }]}>
             <Text style={[st.sumItem, { color: C.cream, fontWeight: "700" }]}>Total</Text>
-            <Text style={{ color: C.gold, fontSize: 17, fontWeight: "700" }}>{fmt(total)}</Text>
+            <Text style={{ color: C.burg, fontSize: 17, fontWeight: "700" }}>{fmt(total)}</Text>
           </View>
         </View>
 
@@ -278,21 +278,21 @@ const st = StyleSheet.create({
   modeBtn: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: C.burg + "60",
+    borderColor: C.border,
     alignItems: "center",
   },
-  modeBtnActive: { backgroundColor: C.burg, borderColor: C.gold + "60" },
+  modeBtnActive: { backgroundColor: C.burg, borderColor: C.burg },
   modeText: { color: C.textDim, fontWeight: "600", fontSize: 13 },
-  modeTextActive: { color: C.gold },
+  modeTextActive: { color: "#fff" },
   summaryCard: {
     backgroundColor: C.bg2,
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 16,
     marginTop: 20,
     borderWidth: 1,
-    borderColor: C.burg + "30",
+    borderColor: C.border,
   },
   sumItem: { color: C.textDim, fontSize: 13, flex: 1 },
   sumPrice: { color: C.cream, fontSize: 13, fontWeight: "600" },

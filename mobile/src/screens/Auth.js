@@ -47,9 +47,21 @@ export default function AuthScreen({ navigation }) {
       }
       navigation.goBack();
     } catch (err) {
-      const msg = err.message?.includes("auth/")
-        ? err.message.split("auth/")[1].replace(/[-)]/g, " ").trim()
-        : err.message || "Authentication failed";
+      const raw = err.message || "Authentication failed";
+      let msg = raw;
+      if (raw.includes("auth/configuration-not-found") || raw.includes("configuration not found")) {
+        msg = "Email/Password sign-in is not enabled in Firebase Console. Please enable it under Authentication → Sign-in method.";
+      } else if (raw.includes("auth/email-already-in-use")) {
+        msg = "This email is already registered. Try signing in instead.";
+      } else if (raw.includes("auth/invalid-email")) {
+        msg = "Please enter a valid email address.";
+      } else if (raw.includes("auth/weak-password")) {
+        msg = "Password must be at least 6 characters.";
+      } else if (raw.includes("auth/user-not-found") || raw.includes("auth/wrong-password") || raw.includes("auth/invalid-credential")) {
+        msg = "Invalid email or password.";
+      } else if (raw.includes("auth/")) {
+        msg = raw.split("auth/")[1].replace(/[-)]/g, " ").trim();
+      }
       Alert.alert("Error", msg);
     } finally {
       setBusy(false);
@@ -169,18 +181,18 @@ const st = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     alignItems: "center",
-    borderRadius: 8,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: C.burg + "60",
+    borderColor: C.border,
   },
-  tabActive: { backgroundColor: C.burg, borderColor: C.gold + "60" },
+  tabActive: { backgroundColor: C.burg, borderColor: C.burg },
   tabText: { color: C.textDim, fontWeight: "600", fontSize: 14 },
-  tabTextActive: { color: C.gold },
+  tabTextActive: { color: "#fff" },
   pwWrap: { position: "relative", flexDirection: "row", alignItems: "center" },
   eyeBtn: {
     position: "absolute",
     right: 12,
     padding: 4,
   },
-  forgot: { color: C.goldLight, fontSize: 12 },
+  forgot: { color: C.burg, fontSize: 12 },
 });

@@ -11,14 +11,14 @@
 
 // ─── Category accent colours (gradient pairs) ───────────────────────────────
 export const CAT_COLORS = {
-  rice:     ["#b8942f", "#8a6a1a"],
-  soups:    ["#8b2232", "#5a1a2a"],
-  swallow:  ["#d4b86a", "#a08040"],
-  protein:  ["#7a4a2a", "#5a3018"],
-  pasta:    ["#c8a030", "#9a7a20"],
-  sides:    ["#3a7a4a", "#1a4a2a"],
-  fries:    ["#c47a20", "#8a5a10"],
-  general:  ["#6a3a4a", "#4a2030"],
+  rice:     ["#D4A937", "#B8942F"],
+  soups:    ["#8B2232", "#6B2037"],
+  swallow:  ["#C9A84C", "#A08040"],
+  protein:  ["#8A5A3A", "#6B4020"],
+  pasta:    ["#C8A030", "#A08020"],
+  sides:    ["#2E8B4A", "#1A6A3A"],
+  fries:    ["#D48A30", "#B07020"],
+  general:  ["#7A4A5A", "#5A3040"],
 };
 
 // ─── Category hero emoji (shown when no image) ──────────────────────────────
