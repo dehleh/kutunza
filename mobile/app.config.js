@@ -32,7 +32,7 @@ export default ({ config }) => ({
   runtimeVersion: {
     policy: "appVersion",
   },
-  plugins: [],
+  plugins: ["expo-asset", "expo-font"],
   extra: {
     fbApiKey: process.env.EXPO_PUBLIC_FB_API_KEY || "",
     fbAuthDomain: process.env.EXPO_PUBLIC_FB_AUTH_DOMAIN || "",
