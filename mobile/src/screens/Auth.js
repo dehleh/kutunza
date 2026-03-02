@@ -11,9 +11,12 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
 import { C, S } from "../theme";
 import { useAuth } from "../context/Auth";
+
+const logo = require("../../assets/icon.png");
 
 export default function AuthScreen({ navigation }) {
   const { login, register, forgot } = useAuth();
@@ -88,6 +91,13 @@ export default function AuthScreen({ navigation }) {
         contentContainerStyle={st.container}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Logo */}
+        <View style={st.logoWrap}>
+          <Image source={logo} style={st.logo} resizeMode="contain" />
+          <Text style={st.brandName}>Kutunza Gourmet</Text>
+          <Text style={st.tagline}>Nurturing Kings</Text>
+        </View>
+
         {/* Tab toggle */}
         <View style={st.tabs}>
           {["login", "register"].map((t) => (
@@ -175,7 +185,27 @@ export default function AuthScreen({ navigation }) {
 }
 
 const st = StyleSheet.create({
-  container: { padding: 20, paddingTop: 30 },
+  container: { padding: 20, paddingTop: 16 },
+  logoWrap: {
+    alignItems: "center",
+    marginBottom: 28,
+  },
+  logo: {
+    width: 90,
+    height: 90,
+    marginBottom: 10,
+  },
+  brandName: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: C.cream,
+    letterSpacing: 0.5,
+  },
+  tagline: {
+    fontSize: 13,
+    color: C.textDim,
+    marginTop: 2,
+  },
   tabs: { flexDirection: "row", marginBottom: 24, gap: 10 },
   tab: {
     flex: 1,

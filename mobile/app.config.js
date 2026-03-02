@@ -34,7 +34,18 @@ export default ({ config }) => ({
   runtimeVersion: {
     policy: "appVersion",
   },
-  plugins: ["expo-asset", "expo-font"],
+  plugins: [
+    "expo-asset",
+    "expo-font",
+    [
+      "expo-splash-screen",
+      {
+        image: "./assets/icon.png",
+        imageWidth: 200,
+        backgroundColor: "#FFFFFF",
+      },
+    ],
+  ],
   extra: {
     fbApiKey: process.env.EXPO_PUBLIC_FB_API_KEY || "",
     fbAuthDomain: process.env.EXPO_PUBLIC_FB_AUTH_DOMAIN || "",
