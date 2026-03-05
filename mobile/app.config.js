@@ -56,7 +56,7 @@ export default ({ config }) => ({
     apiUrl: process.env.EXPO_PUBLIC_API_URL || "",
     paystackPublicKey: process.env.EXPO_PUBLIC_PAYSTACK_PUBLIC_KEY || "",
     eas: {
-      projectId: "your-eas-project-id",
+      projectId: "ffb82c5e-0b3f-44f2-b27d-0083795dfbb0",
     },
   },
 });
