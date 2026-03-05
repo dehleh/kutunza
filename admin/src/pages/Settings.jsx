@@ -24,7 +24,7 @@ export default function Settings() {
     try {
       await settingsAPI.update({
         deliveryFee: Number(deliveryFee),
-        minOrder: Number(minOrder),
+        minOrderAmount: Number(minOrder),
       });
       toast("Settings saved");
     } catch (err) {

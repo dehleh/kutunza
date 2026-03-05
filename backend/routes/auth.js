@@ -43,11 +43,9 @@ router.get("/profile", requireAuth, async (req, res) => {
   const db = getDb();
   try {
     const doc = await db.collection("users").doc(req.user.uid).get();
-    if (!doc.exists) return res.json({ profile: null, isAdmin: false });
-
-    // Check admin status
+    // Check admin status regardless of whether user profile exists
     const adminDoc = await db.collection("admins").doc(req.user.uid).get();
-    res.json({ profile: doc.data(), isAdmin: adminDoc.exists });
+    res.json({ profile: doc.exists ? doc.data() : null, isAdmin: adminDoc.exists });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch profile" });
   }

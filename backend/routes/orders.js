@@ -4,8 +4,11 @@
 const express = require("express");
 const router = express.Router();
 const { v4: uuidv4 } = require("uuid");
+const admin = require("firebase-admin");
 const { getDb } = require("../firebase");
 const { requireAuth, requireAdmin } = require("../middleware/auth");
+
+const FieldValue = admin.firestore.FieldValue;
 
 // ─── Order Status Flow ────────────────────────────────────────────────────────
 // pending → confirmed → preparing → out_for_delivery → delivered

@@ -77,7 +77,7 @@ export default function ProfileScreen({ navigation }) {
     setSaving(true);
     try {
       await authAPI.createProfile({
-        displayName: editName.trim(),
+        name: editName.trim(),
         phone: editPhone.trim(),
       });
       Alert.alert("Saved", "Profile updated successfully.");
