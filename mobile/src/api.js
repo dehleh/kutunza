@@ -9,7 +9,7 @@ import { getIdToken } from "./firebase";
 const extra = Constants.expoConfig?.extra ?? {};
 const BASE_URL = extra.apiUrl || (__DEV__
   ? "http://10.0.2.2:4000/api" // Android emulator → host machine
-  : "https://api.kutunzafoods.com/api");
+  : "https://kutunza-backend-production.up.railway.app/api");
 
 const api = axios.create({
   baseURL: BASE_URL,
