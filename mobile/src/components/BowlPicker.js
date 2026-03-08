@@ -29,7 +29,9 @@ export default function BowlPicker({ visible, itemName, onSelect, onClose }) {
             >
               <View style={{ flex: 1 }}>
                 <Text style={st.optLabel}>{size.label}</Text>
-                <Text style={st.optDesc}>{size.desc}</Text>
+                <Text style={st.optDesc}>
+                  {size.desc}{size.id === "single" ? "  •  Min 5 pcs" : ""}
+                </Text>
               </View>
             </TouchableOpacity>
           ))}

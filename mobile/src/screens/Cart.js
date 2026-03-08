@@ -55,7 +55,17 @@ export default function CartScreen({ navigation }) {
 
         <View style={st.qtyRow}>
           <TouchableOpacity
-            onPress={() => updateQty(item.id, item.bowlSize, item.qty - 1)}
+            onPress={() => {
+              const minQty = item.bowlSize === "single" ? 5 : 1;
+              if (item.qty <= minQty) {
+                Alert.alert("Remove item?", "This will remove the item from your cart.", [
+                  { text: "Cancel", style: "cancel" },
+                  { text: "Remove", style: "destructive", onPress: () => removeFromCart(item.id, item.bowlSize) },
+                ]);
+              } else {
+                updateQty(item.id, item.bowlSize, item.qty - 1);
+              }
+            }}
             style={st.qtyBtn}
           >
             <Ionicons name="remove" size={16} color={C.cream} />
@@ -68,6 +78,9 @@ export default function CartScreen({ navigation }) {
             <Ionicons name="add" size={16} color={C.cream} />
           </TouchableOpacity>
         </View>
+        {item.bowlSize === "single" && (
+          <Text style={st.minNote}>Min: 5</Text>
+        )}
 
         <TouchableOpacity
           onPress={() => removeFromCart(item.id, item.bowlSize)}
@@ -152,6 +165,7 @@ const st = StyleSheet.create({
     borderColor: C.border,
   },
   qtyText: { color: C.cream, fontSize: 14, fontWeight: "700", minWidth: 20, textAlign: "center" },
+  minNote: { color: C.textDim, fontSize: 9, position: "absolute", bottom: -10, right: 30, fontStyle: "italic" },
   summary: {
     padding: 16,
     borderTopWidth: 1,

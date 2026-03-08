@@ -64,7 +64,8 @@ export function CartProvider({ children }) {
   }, []);
 
   const updateQty = useCallback((id, bowlSize, qty) => {
-    if (qty < 1) return removeFromCart(id, bowlSize);
+    const minQty = bowlSize === "single" ? 5 : 1;
+    if (qty < minQty) return removeFromCart(id, bowlSize);
     setCart((prev) =>
       prev.map((c) => {
         const key = c.bowlSize ? `${c.id}_${c.bowlSize}` : c.id;

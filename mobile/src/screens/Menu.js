@@ -83,12 +83,13 @@ export default function MenuScreen() {
     (size) => {
       if (!bowlItem) return;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      const minQty = size.id === "single" ? 5 : 1;
       addToCart({
         ...bowlItem,
         bowlSize: size.id,
         bowlLabel: size.label,
         bowlMultiplier: size.multiplier,
-        qty: 1,
+        qty: minQty,
       });
       setBowlItem(null);
     },
