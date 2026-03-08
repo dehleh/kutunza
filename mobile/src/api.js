@@ -17,10 +17,14 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// M5 — Offline check before every request
+// M5 — Cache network state via subscription instead of fetching per-request
+let isConnected = true;
+NetInfo.addEventListener((state) => {
+  isConnected = state.isConnected;
+});
+
 api.interceptors.request.use(async (config) => {
-  const state = await NetInfo.fetch();
-  if (!state.isConnected) {
+  if (!isConnected) {
     return Promise.reject(new Error("No internet connection. Please check your network and try again."));
   }
   // Attach Firebase token automatically

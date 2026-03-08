@@ -92,12 +92,13 @@ export default function OrderDetailScreen({ route, navigation }) {
         <Text style={st.sectionHead}>Items</Text>
         {(order.cart || []).map((item, i) => {
           const lineTotal = item.lineTotal || item.finalPrice * item.qty || item.price * (item.bowlMultiplier || 1) * item.qty;
+          const bowlLabel = typeof item.bowlSize === 'string' ? item.bowlSize : item.bowlSize?.label;
           return (
             <View key={i} style={st.itemRow}>
               <View style={{ flex: 1 }}>
                 <Text style={st.itemName}>
                   {item.name}
-                  {item.bowlSize?.label ? ` (${item.bowlSize.label})` : ""}
+                  {bowlLabel ? ` (${bowlLabel})` : ""}
                 </Text>
                 <Text style={st.itemQty}>Qty: {item.qty}</Text>
               </View>

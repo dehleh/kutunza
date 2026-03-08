@@ -31,7 +31,6 @@ export default function BowlPicker({ visible, itemName, onSelect, onClose }) {
                 <Text style={st.optLabel}>{size.label}</Text>
                 <Text style={st.optDesc}>{size.desc}</Text>
               </View>
-              <Text style={st.optMult}>×{size.multiplier}</Text>
             </TouchableOpacity>
           ))}
 

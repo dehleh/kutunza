@@ -170,8 +170,15 @@ export default function Menu() {
   return (
     <div>
       <div className="page-header">
-        <h1>Menu Management</h1>
-        <p>Add, edit, and toggle menu items</p>
+        <div>
+          <h1>Menu Management</h1>
+          <p>Add, edit, and toggle menu items</p>
+        </div>
+        {categories.length > 0 && (
+          <button className="btn btn-gold" onClick={handleSeedMenu} disabled={seeding}>
+            {seeding ? "Seeding…" : "Seed Default Menu"}
+          </button>
+        )}
       </div>
 
       {/* Seed menu banner — shows when Firestore menu is empty */}

@@ -167,6 +167,14 @@ router.post("/category", requireAdmin, async (req, res) => {
 router.delete("/:catId", requireAdmin, async (req, res) => {
   const db = getDb();
   try {
+    const doc = await db.collection("menu").doc(req.params.catId).get();
+    if (!doc.exists) return res.status(404).json({ error: "Category not found" });
+
+    const data = doc.data();
+    if (!data.label || !Array.isArray(data.items)) {
+      return res.status(400).json({ error: "Document is not a valid category" });
+    }
+
     await db.collection("menu").doc(req.params.catId).delete();
     res.json({ success: true });
   } catch (err) {
