@@ -70,6 +70,7 @@ export const paymentAPI = {
 export const eventAPI = {
   submit: (data) => api.post("/events", data),
   getMyEvents: () => api.get("/events/my"),
+  suggestMenu: (data) => api.post("/events/suggest-menu", data),
 };
 
 // ─── Settings ───────────────────────────────────────────────────────────────

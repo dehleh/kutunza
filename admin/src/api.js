@@ -56,6 +56,8 @@ export const eventAPI = {
     return api.get(`/events${q}`);
   },
   updateStatus: (id, status, note) => api.patch(`/events/${id}/status`, { status, note }),
+  create: (data) => api.post("/events", data),
+  suggestMenu: (data) => api.post("/events/suggest-menu", data),
 };
 
 // Settings
