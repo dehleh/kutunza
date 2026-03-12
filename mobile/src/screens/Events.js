@@ -86,10 +86,8 @@ export default function EventsScreen() {
   const selectedList = useMemo(() => Object.values(selectedItems), [selectedItems]);
   const menuTotal = useMemo(() => selectedList.reduce((s, i) => s + i.price * i.qty, 0), [selectedList]);
 
-  const setQty = (item, delta) => {
+  const setQty = (item, newQty) => {
     setSelectedItems((prev) => {
-      const existing = prev[item.id || item.itemId];
-      const newQty = (existing?.qty || 0) + delta;
       if (newQty <= 0) {
         const copy = { ...prev };
         delete copy[item.id || item.itemId];
@@ -102,9 +100,37 @@ export default function EventsScreen() {
           name: item.name,
           category: item.category,
           price: item.price,
-          qty: newQty,
+          qty: Math.min(newQty, 5000),
         },
       };
+    });
+  };
+
+  // Custom menu items
+  const [customItems, setCustomItems] = useState([]);
+  const [customName, setCustomName] = useState("");
+  const [customPrice, setCustomPrice] = useState("");
+  const [customQty, setCustomQty] = useState("");
+
+  const addCustomItem = () => {
+    const n = customName.trim();
+    const p = parseInt(customPrice, 10);
+    const q = parseInt(customQty, 10) || 1;
+    if (!n) { Alert.alert("Name required", "Enter a name for the custom item."); return; }
+    if (!p || p < 1) { Alert.alert("Price required", "Enter a valid price."); return; }
+    const id = `custom-${Date.now()}`;
+    setSelectedItems((prev) => ({
+      ...prev,
+      [id]: { itemId: id, name: n, category: "Custom", price: p, qty: Math.min(q, 5000) },
+    }));
+    setCustomName(""); setCustomPrice(""); setCustomQty("");
+  };
+
+  const removeItem = (itemId) => {
+    setSelectedItems((prev) => {
+      const copy = { ...prev };
+      delete copy[itemId];
+      return copy;
     });
   };
 
@@ -373,13 +399,21 @@ export default function EventsScreen() {
                   <View style={st.qtyRow}>
                     {sel ? (
                       <>
-                        <TouchableOpacity style={st.qtyBtn} onPress={() => setQty(item, -1)}>
-                          <Ionicons name="remove" size={16} color={C.burg} />
+                        <TouchableOpacity style={st.qtyBtn} onPress={() => removeItem(item.id)}>
+                          <Ionicons name="trash-outline" size={14} color={C.burg} />
                         </TouchableOpacity>
-                        <Text style={st.qtyText}>{sel.qty}</Text>
-                        <TouchableOpacity style={st.qtyBtn} onPress={() => setQty(item, 1)}>
-                          <Ionicons name="add" size={16} color={C.burg} />
-                        </TouchableOpacity>
+                        <TextInput
+                          style={st.qtyInput}
+                          value={String(sel.qty)}
+                          onChangeText={(t) => {
+                            const n = parseInt(t, 10);
+                            if (t === "" || t === "0") setQty(item, 0);
+                            else if (n > 0) setQty(item, n);
+                          }}
+                          keyboardType="number-pad"
+                          selectTextOnFocus
+                          maxLength={4}
+                        />
                       </>
                     ) : (
                       <TouchableOpacity style={st.addBtn} onPress={() => setQty(item, 1)}>
@@ -391,6 +425,45 @@ export default function EventsScreen() {
                 </View>
               );
             })}
+
+            {/* Custom menu item */}
+            <View style={st.customSection}>
+              <Text style={[S.label, { marginBottom: 8 }]}>Add Custom Item</Text>
+              <View style={st.customRow}>
+                <TextInput
+                  style={[S.input, { flex: 2 }]}
+                  value={customName}
+                  onChangeText={setCustomName}
+                  placeholder="Item name"
+                  placeholderTextColor={C.textDim}
+                  maxLength={100}
+                />
+              </View>
+              <View style={[st.customRow, { marginTop: 8 }]}>
+                <TextInput
+                  style={[S.input, { flex: 1 }]}
+                  value={customPrice}
+                  onChangeText={setCustomPrice}
+                  placeholder="Price"
+                  placeholderTextColor={C.textDim}
+                  keyboardType="number-pad"
+                  maxLength={8}
+                />
+                <TextInput
+                  style={[S.input, { flex: 1 }]}
+                  value={customQty}
+                  onChangeText={setCustomQty}
+                  placeholder="Qty (1)"
+                  placeholderTextColor={C.textDim}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                />
+                <TouchableOpacity style={st.addBtn} onPress={addCustomItem}>
+                  <Ionicons name="add" size={16} color="#fff" />
+                  <Text style={st.addBtnText}>Add</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         )}
 
@@ -594,7 +667,30 @@ const st = StyleSheet.create({
     borderWidth: 1,
     borderColor: C.burg + "40",
   },
-  qtyText: { color: C.cream, fontSize: 14, fontWeight: "700", minWidth: 20, textAlign: "center" },
+  qtyInput: {
+    color: C.cream,
+    fontSize: 14,
+    fontWeight: "700",
+    minWidth: 44,
+    textAlign: "center",
+    backgroundColor: C.bg3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: C.burg + "40",
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+  },
+  customSection: {
+    marginTop: 16,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+  },
+  customRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   addBtn: {
     flexDirection: "row",
     alignItems: "center",
