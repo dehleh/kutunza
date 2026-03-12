@@ -225,11 +225,20 @@ export default function Menu() {
           <div className="table-wrap">
             <table>
               <thead>
-                <tr><th>Name</th><th>Description</th><th>Price</th><th>Active</th><th></th></tr>
+                <tr><th style={{ width: 50 }}>Image</th><th>Name</th><th>Description</th><th>Price</th><th>Active</th><th></th></tr>
               </thead>
               <tbody>
                 {(currentCat.items || []).map((item) => (
                   <tr key={item.id} style={{ opacity: item.active === false ? 0.5 : 1 }}>
+                    <td>
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt={item.name} style={{ width: 40, height: 40, borderRadius: 6, objectFit: "cover" }} />
+                      ) : (
+                        <div style={{ width: 40, height: 40, borderRadius: 6, background: "var(--bg3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+                          {currentCat.icon}
+                        </div>
+                      )}
+                    </td>
                     <td style={{ fontWeight: 600 }}>{item.name}</td>
                     <td style={{ fontSize: 12, color: "var(--text-dim)", maxWidth: 260 }}>{item.desc}</td>
                     <td style={{ color: "var(--gold)", fontWeight: 600 }}>{fmt(item.price)}</td>
@@ -317,6 +326,7 @@ function ItemModal({ title, initial, onClose, onSave, toast }) {
   const [name, setName] = useState(initial.name || "");
   const [price, setPrice] = useState(initial.price || "");
   const [desc, setDesc] = useState(initial.desc || "");
+  const [imageUrl, setImageUrl] = useState(initial.imageUrl || "");
   const [busy, setBusy] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -324,7 +334,7 @@ function ItemModal({ title, initial, onClose, onSave, toast }) {
     if (!name || !price) return toast("Name and price required", "error");
     setBusy(true);
     try {
-      await onSave({ name, price: Number(price), desc });
+      await onSave({ name, price: Number(price), desc, imageUrl: imageUrl.trim() });
     } catch (err) {
       toast(err.message, "error");
     } finally {
@@ -347,6 +357,25 @@ function ItemModal({ title, initial, onClose, onSave, toast }) {
         <div className="form-group">
           <label className="form-label">Description</label>
           <textarea className="form-textarea" value={desc} onChange={(e) => setDesc(e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Image URL</label>
+          <input
+            className="form-input"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            placeholder="https://example.com/food-image.jpg"
+          />
+          {imageUrl.trim() && (
+            <div style={{ marginTop: 8 }}>
+              <img
+                src={imageUrl.trim()}
+                alt="Preview"
+                style={{ width: 120, height: 80, objectFit: "cover", borderRadius: 8, border: "1px solid var(--border)" }}
+                onError={(e) => { e.target.style.display = "none"; }}
+              />
+            </div>
+          )}
         </div>
         <div className="modal-actions">
           <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>

@@ -85,7 +85,7 @@ router.patch("/:catId/item/:itemId/toggle", requireAdmin, async (req, res) => {
 // ─── PATCH /menu/:catId/item/:itemId — Admin: edit item ──────────────────────
 router.patch("/:catId/item/:itemId", requireAdmin, async (req, res) => {
   const db = getDb();
-  const { name, price, desc } = req.body;
+  const { name, price, desc, imageUrl } = req.body;
   try {
     const ref = db.collection("menu").doc(req.params.catId);
     const doc = await ref.get();
@@ -94,7 +94,13 @@ router.patch("/:catId/item/:itemId", requireAdmin, async (req, res) => {
     const cat = doc.data();
     const items = cat.items.map(i =>
       i.id === req.params.itemId
-        ? { ...i, name: name || i.name, price: price || i.price, desc: desc || i.desc }
+        ? {
+            ...i,
+            name: name || i.name,
+            price: price || i.price,
+            desc: desc || i.desc,
+            ...(imageUrl !== undefined ? { imageUrl: String(imageUrl).slice(0, 500) } : {}),
+          }
         : i
     );
     await ref.update({ items, updatedAt: new Date().toISOString() });
@@ -107,7 +113,7 @@ router.patch("/:catId/item/:itemId", requireAdmin, async (req, res) => {
 // ─── POST /menu/:catId/item — Admin: add item to category ────────────────────
 router.post("/:catId/item", requireAdmin, async (req, res) => {
   const db = getDb();
-  const { id, name, price, desc } = req.body;
+  const { id, name, price, desc, imageUrl } = req.body;
   if (!name || !price) return res.status(400).json({ error: "Name and price required" });
 
   try {
@@ -116,7 +122,14 @@ router.post("/:catId/item", requireAdmin, async (req, res) => {
     if (!doc.exists) return res.status(404).json({ error: "Category not found" });
 
     const cat = doc.data();
-    const newItem = { id: id || `item_${Date.now()}`, name, price: Number(price), desc: desc || "", active: true };
+    const newItem = {
+      id: id || `item_${Date.now()}`,
+      name,
+      price: Number(price),
+      desc: desc || "",
+      active: true,
+      ...(imageUrl ? { imageUrl: String(imageUrl).slice(0, 500) } : {}),
+    };
     await ref.update({
       items: [...cat.items, newItem],
       updatedAt: new Date().toISOString(),
