@@ -50,6 +50,17 @@ export default function Orders() {
     }
   };
 
+  const handleConfirmPayment = async (orderId) => {
+    try {
+      await orderAPI.confirmPayment(orderId);
+      toast("Payment confirmed — order is now active");
+      fetchOrders();
+      setDetail(null);
+    } catch (err) {
+      toast(err.message, "error");
+    }
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -126,7 +137,7 @@ export default function Orders() {
                     <td style={{ fontSize: 12 }}>{(o.cart || []).length} items</td>
                     <td style={{ fontWeight: 600, color: "var(--gold)" }}>{fmt(o.total)}</td>
                     <td><span className={`badge ${o.status}`}>{o.status?.replace(/_/g, " ")}</span></td>
-                    <td><span className={`badge ${o.paymentStatus}`}>{o.paymentStatus}</span></td>
+                    <td><span className={`badge ${o.paymentStatus}`}>{o.paymentStatus}</span>{o.paymentMethod === "whatsapp" && <span className="badge" style={{ marginLeft: 4, background: "#25D366", color: "#fff" }}>WhatsApp</span>}</td>
                     <td style={{ fontSize: 11, color: "var(--text-dim)" }}>{o.createdAt?.slice(0, 10)}</td>
                     <td>
                       <button className="btn btn-burg btn-sm" onClick={() => setDetail(o)}>View</button>
@@ -149,7 +160,7 @@ export default function Orders() {
               <div><span style={{ color: "var(--text-dim)" }}>Customer:</span> {detail.customer?.name}</div>
               <div><span style={{ color: "var(--text-dim)" }}>Phone:</span> {detail.customer?.phone}</div>
               <div><span style={{ color: "var(--text-dim)" }}>Type:</span> {detail.deliveryType}</div>
-              <div><span style={{ color: "var(--text-dim)" }}>Payment:</span> <span className={`badge ${detail.paymentStatus}`}>{detail.paymentStatus}</span></div>
+              <div><span style={{ color: "var(--text-dim)" }}>Payment:</span> <span className={`badge ${detail.paymentStatus}`}>{detail.paymentStatus}</span>{detail.paymentMethod === "whatsapp" && <span className="badge" style={{ marginLeft: 4, background: "#25D366", color: "#fff" }}>WhatsApp</span>}</div>
               {detail.address && <div style={{ gridColumn: "span 2" }}><span style={{ color: "var(--text-dim)" }}>Address:</span> {detail.address}</div>}
               {detail.note && <div style={{ gridColumn: "span 2" }}><span style={{ color: "var(--text-dim)" }}>Note:</span> {detail.note}</div>}
             </div>
@@ -175,6 +186,23 @@ export default function Orders() {
             <div style={{ textAlign: "right", fontSize: 18, fontWeight: 700, color: "var(--gold)" }}>
               Total: {fmt(detail.total)}
             </div>
+
+            {/* Confirm payment for WhatsApp bank transfer orders */}
+            {detail.paymentMethod === "whatsapp" && detail.paymentStatus === "awaiting_transfer" && (
+              <div style={{ marginTop: 16, padding: 12, background: "rgba(37,211,102,.1)", borderRadius: 8, border: "1px solid rgba(37,211,102,.3)" }}>
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: "#25D366" }}>💳 Awaiting Bank Transfer</div>
+                <div style={{ fontSize: 12, color: "var(--text-dim)", marginBottom: 10 }}>
+                  Once the customer has transferred {fmt(detail.total)}, confirm payment to start preparing the order.
+                </div>
+                <button
+                  className="btn btn-sm"
+                  style={{ background: "#25D366", color: "#fff", border: "none" }}
+                  onClick={() => handleConfirmPayment(detail.orderId)}
+                >
+                  ✓ Confirm Payment Received
+                </button>
+              </div>
+            )}
 
             {/* Status update */}
             <div style={{ marginTop: 16, borderTop: "1px solid rgba(114,47,55,.3)", paddingTop: 16 }}>

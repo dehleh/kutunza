@@ -16,6 +16,9 @@ export default function Settings() {
     minOrderAmount: 0,
     operatingHours: "",
     socialLinks: { instagram: "", twitter: "", facebook: "" },
+    whatsappNumber: "",
+    whatsappEnabled: false,
+    bankAccountDetails: "",
   });
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -38,6 +41,9 @@ export default function Settings() {
           twitter: s.socialLinks?.twitter ?? "",
           facebook: s.socialLinks?.facebook ?? "",
         },
+        whatsappNumber: s.whatsappNumber ?? "",
+        whatsappEnabled: s.whatsappEnabled ?? false,
+        bankAccountDetails: s.bankAccountDetails ?? "",
       });
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
@@ -116,6 +122,50 @@ export default function Settings() {
           <div className="form-group">
             <label className="form-label">Operating Hours</label>
             <input className="form-input" value={form.operatingHours} onChange={(e) => set("operatingHours", e.target.value)} placeholder="e.g. Mon–Sat 9am–9pm" />
+          </div>
+        </div>
+
+        {/* WhatsApp Ordering */}
+        <div className="card" style={{ maxWidth: 600, marginBottom: 16 }}>
+          <h3 style={{ margin: "0 0 12px" }}>WhatsApp Ordering</h3>
+          <div className="form-group">
+            <label className="form-label" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input
+                type="checkbox"
+                checked={form.whatsappEnabled}
+                onChange={(e) => set("whatsappEnabled", e.target.checked)}
+                style={{ width: 16, height: 16 }}
+              />
+              Enable WhatsApp ordering
+            </label>
+            <small style={{ color: "#8E8E9A", display: "block", marginTop: 4 }}>
+              When enabled, customers can place orders via WhatsApp. You'll share account details for bank transfer, then confirm payment before preparing the order.
+            </small>
+          </div>
+          <div className="form-group">
+            <label className="form-label">WhatsApp Number</label>
+            <input
+              className="form-input"
+              value={form.whatsappNumber}
+              onChange={(e) => set("whatsappNumber", e.target.value)}
+              placeholder="e.g. 2348012345678 (with country code, no +)"
+            />
+            <small style={{ color: "#8E8E9A", display: "block", marginTop: 4 }}>
+              International format without + or spaces. Orders will be sent to this number.
+            </small>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Bank Account Details</label>
+            <textarea
+              className="form-input"
+              rows={3}
+              value={form.bankAccountDetails}
+              onChange={(e) => set("bankAccountDetails", e.target.value)}
+              placeholder="e.g. Bank Name: GTBank&#10;Account Number: 0123456789&#10;Account Name: Kutunza Foods"
+            />
+            <small style={{ color: "#8E8E9A", display: "block", marginTop: 4 }}>
+              These details will be shared with customers on WhatsApp for bank transfers.
+            </small>
           </div>
         </div>
 

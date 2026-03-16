@@ -32,6 +32,7 @@ export const orderAPI = {
     return api.get(`/orders${q}`);
   },
   updateStatus: (id, status, note) => api.patch(`/orders/${id}/status`, { status, note }),
+  confirmPayment: (id) => api.patch(`/orders/${id}/confirm-payment`),
   cancelOrder: (id, reason) => api.patch(`/orders/${id}/cancel`, { reason }),
   cleanup: () => api.post("/orders/cleanup"),
 };

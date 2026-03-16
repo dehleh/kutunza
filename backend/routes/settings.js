@@ -27,6 +27,9 @@ router.get("/", async (req, res) => {
           minOrderAmount: 0,
           operatingHours: "",
           socialLinks: { instagram: "", twitter: "", facebook: "" },
+          whatsappNumber: "",
+          whatsappEnabled: false,
+          bankAccountDetails: "",
         },
       });
     }
@@ -44,6 +47,7 @@ router.put("/", requireAdmin, async (req, res) => {
     businessName, phone1, phone2, website, address,
     deliveryAreas, deliveryFee, minOrderAmount,
     operatingHours, socialLinks,
+    whatsappNumber, whatsappEnabled,
   } = req.body;
 
   try {
@@ -58,6 +62,9 @@ router.put("/", requireAdmin, async (req, res) => {
       minOrderAmount: parseInt(minOrderAmount) || 0,
       operatingHours: operatingHours || "",
       socialLinks: socialLinks || {},
+      whatsappNumber: String(whatsappNumber || "").slice(0, 20),
+      whatsappEnabled: Boolean(whatsappEnabled),
+      bankAccountDetails: String(req.body.bankAccountDetails || "").slice(0, 500),
       updatedAt: new Date().toISOString(),
       updatedBy: req.user.uid,
     };

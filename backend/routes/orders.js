@@ -26,10 +26,14 @@ const ORDER_STATUSES = [
 // ─── POST /orders — Place new order ──────────────────────────────────────────
 router.post("/", requireAuth, async (req, res) => {
   const db = getDb();
-  const { cart, deliveryType, address, phone, name, note } = req.body;
+  const { cart, deliveryType, address, phone, name, note, paymentMethod } = req.body;
 
   if (!cart?.length) return res.status(400).json({ error: "Cart is empty" });
   if (!phone || !name) return res.status(400).json({ error: "Name and phone are required" });
+
+  // Validate paymentMethod
+  const validPaymentMethods = ["paystack", "whatsapp"];
+  const method = validPaymentMethods.includes(paymentMethod) ? paymentMethod : "paystack";
 
   // Validate minimum order
   const subtotal = cart.reduce((s, i) => s + i.finalPrice * i.qty, 0);
@@ -42,6 +46,9 @@ router.post("/", requireAuth, async (req, res) => {
   const total = subtotal + deliveryFee;
 
   const orderId = `KTZ-${Date.now()}-${uuidv4().slice(0, 6).toUpperCase()}`;
+
+  // WhatsApp orders await bank transfer; Paystack orders start with payment pending
+  const isWhatsApp = method === "whatsapp";
 
   const order = {
     orderId,
@@ -62,13 +69,14 @@ router.post("/", requireAuth, async (req, res) => {
     subtotal,
     deliveryFee,
     total,
+    paymentMethod: method,
     status: "pending",
-    paymentStatus: "pending",
+    paymentStatus: isWhatsApp ? "awaiting_transfer" : "pending",
     paystackReference: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     timeline: [
-      { status: "pending", timestamp: new Date().toISOString(), note: "Order placed" },
+      { status: "pending", timestamp: new Date().toISOString(), note: isWhatsApp ? "Order placed via WhatsApp — awaiting bank transfer" : "Order placed" },
     ],
   };
 
@@ -170,6 +178,50 @@ router.patch("/:id/status", requireAdmin, async (req, res) => {
   } catch (err) {
     console.error("Status update failed:", err);
     res.status(500).json({ error: "Failed to update order status" });
+  }
+});
+
+// ─── PATCH /orders/:id/confirm-payment — Admin confirms bank transfer ────────
+router.patch("/:id/confirm-payment", requireAdmin, async (req, res) => {
+  const db = getDb();
+  try {
+    const ref = db.collection("orders").doc(req.params.id);
+    const doc = await ref.get();
+    if (!doc.exists) return res.status(404).json({ error: "Order not found" });
+
+    const order = doc.data();
+    if (order.paymentStatus === "paid") {
+      return res.json({ success: true, alreadyPaid: true });
+    }
+    if (order.paymentMethod !== "whatsapp") {
+      return res.status(400).json({ error: "Only WhatsApp orders can be confirmed manually" });
+    }
+
+    const timelineEntry = {
+      status: "confirmed",
+      timestamp: new Date().toISOString(),
+      note: "Bank transfer confirmed by admin",
+      updatedBy: req.user.uid,
+    };
+
+    await ref.update({
+      paymentStatus: "paid",
+      status: "confirmed",
+      updatedAt: new Date().toISOString(),
+      timeline: [...(order.timeline || []), timelineEntry],
+    });
+
+    await db
+      .collection("users")
+      .doc(order.userId)
+      .collection("orders")
+      .doc(req.params.id)
+      .update({ status: "confirmed", updatedAt: new Date().toISOString() });
+
+    res.json({ success: true, orderId: req.params.id });
+  } catch (err) {
+    console.error("Confirm payment failed:", err);
+    res.status(500).json({ error: "Failed to confirm payment" });
   }
 });
 

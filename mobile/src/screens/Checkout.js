@@ -11,13 +11,14 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Linking,
 } from "react-native";
 import { WebView } from "react-native-webview";
 import { Ionicons } from "@expo/vector-icons";
 import { C, S, fmt } from "../theme";
 import { useAuth } from "../context/Auth";
 import { useCart } from "../context/Cart";
-import { orderAPI, paymentAPI } from "../api";
+import { orderAPI, paymentAPI, settingsAPI } from "../api";
 
 export default function CheckoutScreen({ route, navigation }) {
   const deliveryFee = route.params?.deliveryFee || 1500;
@@ -32,10 +33,23 @@ export default function CheckoutScreen({ route, navigation }) {
   const [busy, setBusy] = useState(false);
   const [payUrl, setPayUrl] = useState(null); // Paystack WebView URL
   const [done, setDone] = useState(false);
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [whatsappEnabled, setWhatsappEnabled] = useState(false);
 
   const orderRef = useRef(null);
   const payTimerRef = useRef(null);
   const total = subtotal + (mode === "delivery" ? deliveryFee : 0);
+
+  // Fetch WhatsApp settings
+  useEffect(() => {
+    settingsAPI.get().then((res) => {
+      const s = res.settings || res;
+      if (s.whatsappEnabled && s.whatsappNumber) {
+        setWhatsappEnabled(true);
+        setWhatsappNumber(s.whatsappNumber);
+      }
+    }).catch(() => {});
+  }, []);
 
   // M12 — Payment WebView timeout (5 minutes)
   useEffect(() => {
@@ -127,6 +141,87 @@ export default function CheckoutScreen({ route, navigation }) {
     }
   };
 
+  // ─── WhatsApp order ────────────────────────────────────────────────────────
+  const handleWhatsApp = async () => {
+    if (!name.trim() || !phone.trim()) {
+      Alert.alert("Missing info", "Name and phone are required.");
+      return;
+    }
+    if (mode === "delivery" && !address.trim()) {
+      Alert.alert("Missing info", "Delivery address is required.");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const cartItems = cart.map((c) => ({
+        id: c.id,
+        name: c.name,
+        qty: c.qty,
+        finalPrice: c.price * (c.bowlMultiplier || 1),
+        bowlSize: c.bowlSize ? { label: c.bowlLabel || c.bowlSize } : null,
+        categoryId: c.categoryId,
+      }));
+
+      // Create order in backend with WhatsApp payment method
+      const order = await orderAPI.place({
+        cart: cartItems,
+        name: name.trim(),
+        phone: phone.trim(),
+        address: mode === "delivery" ? address.trim() : "",
+        deliveryType: mode,
+        note: notes.trim(),
+        paymentMethod: "whatsapp",
+      });
+
+      const oid = order.orderId || order.id;
+
+      // Build WhatsApp message
+      const itemLines = cart.map((c) => {
+        const lbl = c.bowlLabel ? ` (${c.bowlLabel})` : "";
+        const lineTotal = c.price * (c.bowlMultiplier || 1) * c.qty;
+        return `• ${c.name}${lbl} ×${c.qty} — ${fmt(lineTotal)}`;
+      }).join("\n");
+
+      const msg = [
+        `🛒 *New Order from Kutunza*`,
+        `Order: *${oid}*`,
+        ``,
+        `*Items:*`,
+        itemLines,
+        ``,
+        `Subtotal: ${fmt(subtotal)}`,
+        mode === "delivery" ? `Delivery: ${fmt(deliveryFee)}` : `Pickup (no delivery fee)`,
+        `*Total: ${fmt(total)}*`,
+        ``,
+        `*Customer:* ${name.trim()}`,
+        `*Phone:* ${phone.trim()}`,
+        mode === "delivery" ? `*Address:* ${address.trim()}` : `*Pickup order*`,
+        notes.trim() ? `*Notes:* ${notes.trim()}` : "",
+        ``,
+        `💳 Please share your account details so I can make the transfer.`,
+      ].filter(Boolean).join("\n");
+
+      // Clean WhatsApp number: remove spaces, dashes, leading +
+      const cleanNum = whatsappNumber.replace(/[\s\-+]/g, "");
+      const waUrl = `https://wa.me/${cleanNum}?text=${encodeURIComponent(msg)}`;
+
+      const supported = await Linking.canOpenURL(waUrl);
+      if (supported) {
+        await Linking.openURL(waUrl);
+      } else {
+        Alert.alert("WhatsApp not available", "Please install WhatsApp to use this option.");
+      }
+
+      clearCart();
+      setDone(true);
+    } catch (err) {
+      Alert.alert("Error", err.message || "Could not process order");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   // ─── Done state ────────────────────────────────────────────────────────────
   if (done) {
     return (
@@ -134,7 +229,7 @@ export default function CheckoutScreen({ route, navigation }) {
         <Ionicons name="checkmark-circle" size={72} color={C.greenLight} />
         <Text style={st.doneTitle}>Order Placed!</Text>
         <Text style={st.doneDesc}>
-          Your order is being prepared. Check the Orders tab for updates.
+          You'll receive account details on WhatsApp to complete payment. Your order will be prepared once payment is confirmed.
         </Text>
         <TouchableOpacity
           style={[S.btnGold, { marginTop: 24, width: "100%" }]}
@@ -269,6 +364,25 @@ export default function CheckoutScreen({ route, navigation }) {
             <Text style={S.btnGoldText}>Pay {fmt(total)}</Text>
           )}
         </TouchableOpacity>
+
+        {/* WhatsApp order button */}
+        {whatsappEnabled && (
+          <TouchableOpacity
+            style={[st.whatsappBtn, { marginTop: 12 }]}
+            onPress={handleWhatsApp}
+            disabled={busy}
+            activeOpacity={0.8}
+          >
+            {busy ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
+                <Ionicons name="logo-whatsapp" size={18} color="#fff" style={{ marginRight: 8 }} />
+                <Text style={st.whatsappBtnText}>Order via WhatsApp</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -304,4 +418,18 @@ const st = StyleSheet.create({
   },
   doneTitle: { color: C.cream, fontSize: 22, fontWeight: "700", marginTop: 16 },
   doneDesc: { color: C.textDim, fontSize: 14, textAlign: "center", marginTop: 8, lineHeight: 20 },
+  whatsappBtn: {
+    backgroundColor: "#25D366",
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  whatsappBtnText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+  },
 });
