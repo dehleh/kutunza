@@ -3,8 +3,21 @@
 
 const express = require("express");
 const router = express.Router();
-const { getDb } = require("../firebase");
+const multer = require("multer");
+const path = require("path");
+const { v4: uuidv4 } = require("uuid");
+const { getDb, admin } = require("../firebase");
 const { requireAdmin } = require("../middleware/auth");
+
+// Multer — memory storage, 5 MB max, images only
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = /^image\/(jpeg|jpg|png|webp|gif)$/;
+    cb(null, allowed.test(file.mimetype));
+  },
+});
 
 // ─── GET /menu — Public: fetch full menu ──────────────────────────────────────
 router.get("/", async (req, res) => {
@@ -192,6 +205,34 @@ router.delete("/:catId", requireAdmin, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: "Delete category failed" });
+  }
+});
+
+// ─── POST /menu/upload-image — Admin: upload menu item image ─────────────────
+router.post("/upload-image", requireAdmin, upload.single("image"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No image file provided" });
+
+  try {
+    const bucket = admin.storage().bucket();
+    const ext = path.extname(req.file.originalname).toLowerCase() || ".jpg";
+    const filename = `menu-images/${uuidv4()}${ext}`;
+    const file = bucket.file(filename);
+
+    await file.save(req.file.buffer, {
+      metadata: {
+        contentType: req.file.mimetype,
+        cacheControl: "public, max-age=31536000",
+      },
+    });
+
+    // Make publicly readable
+    await file.makePublic();
+
+    const url = `https://storage.googleapis.com/${bucket.name}/${filename}`;
+    res.json({ success: true, url });
+  } catch (err) {
+    console.error("Image upload error:", err);
+    res.status(500).json({ error: "Image upload failed" });
   }
 });
 

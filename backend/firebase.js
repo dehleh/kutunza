@@ -39,7 +39,10 @@ function initFirebase() {
     process.exit(1);
   }
 
-  admin.initializeApp({ credential });
+  admin.initializeApp({
+    credential,
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || undefined,
+  });
 
   db = admin.firestore();
   auth = admin.auth();
