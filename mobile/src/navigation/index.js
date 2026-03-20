@@ -16,6 +16,7 @@ import OrderDetailScreen from "../screens/OrderDetail";
 import EventsScreen from "../screens/Events";
 import AuthScreen from "../screens/Auth";
 import ProfileScreen from "../screens/Profile";
+import RewardsScreen from "../screens/Rewards";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -64,6 +65,14 @@ function EventsStack() {
   );
 }
 
+function RewardsStack() {
+  return (
+    <Stack.Navigator screenOptions={screenOpts}>
+      <Stack.Screen name="RewardsHome" component={RewardsScreen} options={{ title: "Rewards" }} />
+    </Stack.Navigator>
+  );
+}
+
 function ProfileStack() {
   return (
     <Stack.Navigator screenOptions={screenOpts}>
@@ -105,6 +114,7 @@ const icons = {
   Menu: "restaurant-outline",
   Events: "calendar-outline",
   Cart: "cart-outline",
+  Rewards: "gift-outline",
   Orders: "receipt-outline",
   Profile: "person-outline",
 };
@@ -137,6 +147,7 @@ export default function RootNavigator() {
       <Tab.Screen name="Menu" component={MenuStack} />
       <Tab.Screen name="Events" component={EventsStack} />
       <Tab.Screen name="Cart" component={CartStack} />
+      <Tab.Screen name="Rewards" component={RewardsStack} />
       <Tab.Screen name="Orders" component={OrdersStack} />
       <Tab.Screen name="Profile" component={ProfileStack} />
     </Tab.Navigator>

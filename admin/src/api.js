@@ -72,4 +72,13 @@ export const paymentAPI = {
   refund: (orderId, reason) => api.post("/payments/refund", { orderId, reason }),
 };
 
+// Rewards
+export const rewardsAPI = {
+  getOverview: () => api.get("/rewards/admin/overview"),
+  getUserRewards: (uid) => api.get(`/rewards/admin/user/${uid}`),
+  adjustPoints: (uid, points, reason) => api.post("/rewards/admin/adjust", { uid, points, reason }),
+  getConfig: () => api.get("/rewards/config"),
+  updateConfig: (data) => api.put("/rewards/admin/config", data),
+};
+
 export default api;

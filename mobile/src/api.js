@@ -78,4 +78,12 @@ export const settingsAPI = {
   get: () => api.get("/settings"),
 };
 
+// ─── Rewards ────────────────────────────────────────────────────────────────
+export const rewardsAPI = {
+  get: () => api.get("/rewards"),
+  getConfig: () => api.get("/rewards/config"),
+  redeem: (points) => api.post("/rewards/redeem", { points }),
+  applyCode: (code) => api.post("/rewards/apply-code", { code }),
+};
+
 export default api;

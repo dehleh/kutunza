@@ -53,6 +53,17 @@ service cloud.firestore {
       allow read: if request.auth != null && request.auth.uid == uid;
     }
 
+    // ─── Rewards ─────────────────────────────────────────────────
+    // Users can read their own rewards account
+    match /rewards/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Transaction subcollection
+      match /transactions/{txId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
     // ─── Helper function ────────────────────────────────────────
     function isAdmin() {
       return exists(/databases/$(database)/documents/admins/$(request.auth.uid));

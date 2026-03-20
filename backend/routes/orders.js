@@ -7,6 +7,7 @@ const { v4: uuidv4 } = require("uuid");
 const admin = require("firebase-admin");
 const { getDb } = require("../firebase");
 const { requireAuth, requireAdmin } = require("../middleware/auth");
+const { awardOrderPoints } = require("./rewards");
 
 const FieldValue = admin.firestore.FieldValue;
 
@@ -173,6 +174,11 @@ router.patch("/:id/status", requireAdmin, async (req, res) => {
       .collection("orders")
       .doc(req.params.id)
       .update({ status, updatedAt: new Date().toISOString() });
+
+    // Award loyalty points when order is delivered
+    if (status === "delivered") {
+      awardOrderPoints(db, order.userId, req.params.id, order.total, order.customer?.name);
+    }
 
     res.json({ success: true, orderId: req.params.id, status });
   } catch (err) {

@@ -212,6 +212,15 @@ export default function ProfileScreen({ navigation }) {
       {/* Quick links */}
       <TouchableOpacity
         style={st.menuItem}
+        onPress={() => navigation.getParent()?.navigate("Rewards")}
+      >
+        <Ionicons name="gift-outline" size={20} color={C.burg} />
+        <Text style={[st.menuLabel, { color: C.burg }]}>My Rewards</Text>
+        <Ionicons name="chevron-forward" size={18} color={C.textDim} />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={st.menuItem}
         onPress={() => navigation.getParent()?.navigate("Orders")}
       >
         <Ionicons name="receipt-outline" size={20} color={C.text} />
