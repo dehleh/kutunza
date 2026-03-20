@@ -64,6 +64,11 @@ service cloud.firestore {
       }
     }
 
+    // ─── Discounts (backend writes, no direct client access) ────
+    match /discounts/{code} {
+      allow read: if request.auth != null;
+    }
+
     // ─── Helper function ────────────────────────────────────────
     function isAdmin() {
       return exists(/databases/$(database)/documents/admins/$(request.auth.uid));

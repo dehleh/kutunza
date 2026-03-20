@@ -72,6 +72,14 @@ export const paymentAPI = {
   refund: (orderId, reason) => api.post("/payments/refund", { orderId, reason }),
 };
 
+// Discounts
+export const discountAPI = {
+  getAll: () => api.get("/discounts/admin"),
+  create: (data) => api.post("/discounts/admin", data),
+  toggle: (code, active) => api.patch(`/discounts/admin/${code}`, { active }),
+  remove: (code) => api.delete(`/discounts/admin/${code}`),
+};
+
 // Rewards
 export const rewardsAPI = {
   getOverview: () => api.get("/rewards/admin/overview"),

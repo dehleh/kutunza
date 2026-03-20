@@ -8,6 +8,7 @@ const admin = require("firebase-admin");
 const { getDb } = require("../firebase");
 const { requireAuth, requireAdmin } = require("../middleware/auth");
 const { awardOrderPoints } = require("./rewards");
+const { applyDiscountToOrder } = require("./discounts");
 
 const FieldValue = admin.firestore.FieldValue;
 
@@ -27,7 +28,7 @@ const ORDER_STATUSES = [
 // ─── POST /orders — Place new order ──────────────────────────────────────────
 router.post("/", requireAuth, async (req, res) => {
   const db = getDb();
-  const { cart, deliveryType, address, phone, name, note, paymentMethod } = req.body;
+  const { cart, deliveryType, address, phone, name, note, paymentMethod, discountCode } = req.body;
 
   if (!cart?.length) return res.status(400).json({ error: "Cart is empty" });
   if (!phone || !name) return res.status(400).json({ error: "Name and phone are required" });
@@ -44,7 +45,23 @@ router.post("/", requireAuth, async (req, res) => {
   }
 
   const deliveryFee = deliveryType === "delivery" ? (parseInt(process.env.DELIVERY_FEE) || 1500) : 0;
-  const total = subtotal + deliveryFee;
+
+  // Apply discount code if provided
+  let discountAmount = 0;
+  let discountDetail = null;
+  let appliedDiscountCode = null;
+  if (discountCode) {
+    try {
+      const discountResult = await applyDiscountToOrder(db, discountCode, subtotal);
+      discountAmount = discountResult.discountAmount;
+      appliedDiscountCode = discountResult.discountCode;
+      discountDetail = discountResult.discountDetail;
+    } catch (discErr) {
+      return res.status(400).json({ error: discErr.message });
+    }
+  }
+
+  const total = subtotal + deliveryFee - discountAmount;
 
   const orderId = `KTZ-${Date.now()}-${uuidv4().slice(0, 6).toUpperCase()}`;
 
@@ -69,6 +86,9 @@ router.post("/", requireAuth, async (req, res) => {
     note: note ? String(note).slice(0, 500) : null,
     subtotal,
     deliveryFee,
+    discountAmount,
+    discountCode: appliedDiscountCode,
+    discountDetail,
     total,
     paymentMethod: method,
     status: "pending",

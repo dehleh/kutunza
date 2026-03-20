@@ -10,6 +10,7 @@ import Events from "./pages/Events";
 import Settings from "./pages/Settings";
 import Users from "./pages/Users";
 import Rewards from "./pages/Rewards";
+import Discounts from "./pages/Discounts";
 
 // ─── Error Boundary (A5) ─────────────────────────────────────────────────────
 class ErrorBoundary extends React.Component {
@@ -66,6 +67,7 @@ const NAV = [
   { path: "/menu", label: "Menu", icon: "🍽" },
   { path: "/events", label: "Events", icon: "📅" },
   { path: "/rewards", label: "Rewards", icon: "🎁" },
+  { path: "/discounts", label: "Discounts", icon: "🏷️" },
   { path: "/users", label: "Users", icon: "👥" },
   { path: "/settings", label: "Settings", icon: "⚙️" },
 ];
@@ -158,6 +160,7 @@ export default function App() {
                       <Route path="/menu" element={<Menu />} />
                       <Route path="/events" element={<Events />} />
                       <Route path="/rewards" element={<Rewards />} />
+                      <Route path="/discounts" element={<Discounts />} />
                       <Route path="/users" element={<Users />} />
                       <Route path="/settings" element={<Settings />} />
                       <Route path="*" element={<Navigate to="/orders" />} />

@@ -78,6 +78,11 @@ export const settingsAPI = {
   get: () => api.get("/settings"),
 };
 
+// ─── Discounts ──────────────────────────────────────────────────────────────
+export const discountAPI = {
+  validate: (code, subtotal) => api.post("/discounts/validate", { code, subtotal }),
+};
+
 // ─── Rewards ────────────────────────────────────────────────────────────────
 export const rewardsAPI = {
   get: () => api.get("/rewards"),

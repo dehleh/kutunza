@@ -17,6 +17,7 @@ const menuRoutes = require("./routes/menu");
 const eventRoutes = require("./routes/events");
 const settingsRoutes = require("./routes/settings");
 const rewardsRoutes = require("./routes/rewards");
+const discountRoutes = require("./routes/discounts");
 
 // ─── Startup Validation ───────────────────────────────────────────────────────
 const REQUIRED_ENV = ["PAYSTACK_SECRET_KEY"];
@@ -116,6 +117,7 @@ app.use("/api/menu", menuRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/rewards", rewardsRoutes);
+app.use("/api/discounts", discountRoutes);
 
 // ─── 404 Handler (B20 — no path leak) ────────────────────────────────────────
 app.use((req, res) => {

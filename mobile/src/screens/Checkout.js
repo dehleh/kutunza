@@ -18,7 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { C, S, fmt } from "../theme";
 import { useAuth } from "../context/Auth";
 import { useCart } from "../context/Cart";
-import { orderAPI, paymentAPI, settingsAPI } from "../api";
+import { orderAPI, paymentAPI, settingsAPI, discountAPI } from "../api";
 
 export default function CheckoutScreen({ route, navigation }) {
   const deliveryFee = route.params?.deliveryFee || 1500;
@@ -36,9 +36,16 @@ export default function CheckoutScreen({ route, navigation }) {
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [whatsappEnabled, setWhatsappEnabled] = useState(false);
 
+  // Discount state
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountInfo, setDiscountInfo] = useState(null); // { discountAmount, code, type, value, description }
+  const [discountError, setDiscountError] = useState("");
+  const [validating, setValidating] = useState(false);
+
   const orderRef = useRef(null);
   const payTimerRef = useRef(null);
-  const total = subtotal + (mode === "delivery" ? deliveryFee : 0);
+  const discountAmount = discountInfo?.discountAmount || 0;
+  const total = subtotal + (mode === "delivery" ? deliveryFee : 0) - discountAmount;
 
   // Fetch WhatsApp settings
   useEffect(() => {
@@ -61,6 +68,29 @@ export default function CheckoutScreen({ route, navigation }) {
     }
     return () => { if (payTimerRef.current) clearTimeout(payTimerRef.current); };
   }, [payUrl]);
+
+  // ─── Apply discount code ──────────────────────────────────────────────────
+  const handleApplyDiscount = async () => {
+    const code = discountCode.trim();
+    if (!code) return;
+    setDiscountError("");
+    setDiscountInfo(null);
+    setValidating(true);
+    try {
+      const res = await discountAPI.validate(code, subtotal);
+      setDiscountInfo(res);
+    } catch (err) {
+      setDiscountError(err.message || "Invalid code");
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const handleRemoveDiscount = () => {
+    setDiscountCode("");
+    setDiscountInfo(null);
+    setDiscountError("");
+  };
 
   // ─── Place order & init payment ────────────────────────────────────────────
   const handlePay = async () => {
@@ -95,6 +125,7 @@ export default function CheckoutScreen({ route, navigation }) {
         address: mode === "delivery" ? address.trim() : "",
         deliveryType: mode,
         note: notes.trim(),
+        discountCode: discountInfo?.code || null,
       });
 
       orderRef.current = order.orderId || order.id;
@@ -172,6 +203,7 @@ export default function CheckoutScreen({ route, navigation }) {
         deliveryType: mode,
         note: notes.trim(),
         paymentMethod: "whatsapp",
+        discountCode: discountInfo?.code || null,
       });
 
       const oid = order.orderId || order.id;
@@ -350,14 +382,67 @@ export default function CheckoutScreen({ route, navigation }) {
               <Text style={st.sumPrice}>{fmt(deliveryFee)}</Text>
             </View>
           )}
+          {discountAmount > 0 && (
+            <View style={[S.rowBetween, { marginTop: 4 }]}>
+              <Text style={[st.sumItem, { color: C.greenLight }]}>Discount ({discountInfo?.code})</Text>
+              <Text style={{ color: C.greenLight, fontSize: 13, fontWeight: "600" }}>-{fmt(discountAmount)}</Text>
+            </View>
+          )}
           <View style={[S.rowBetween, { marginTop: 8 }]}>
             <Text style={[st.sumItem, { color: C.cream, fontWeight: "700" }]}>Total</Text>
             <Text style={{ color: C.burg, fontSize: 17, fontWeight: "700" }}>{fmt(total)}</Text>
           </View>
         </View>
 
+        {/* Discount code */}
+        <View style={st.discountSection}>
+          <Text style={[S.label, { marginBottom: 6 }]}>Discount Code</Text>
+          {discountInfo ? (
+            <View style={st.discountApplied}>
+              <View style={{ flex: 1 }}>
+                <Text style={st.discountAppliedCode}>{discountInfo.code}</Text>
+                <Text style={st.discountAppliedDesc}>
+                  {discountInfo.type === "percentage" ? `${discountInfo.value}% off` : `₦${discountInfo.value.toLocaleString()} off`}
+                  {" — "}{fmt(discountAmount)} saved
+                </Text>
+              </View>
+              <TouchableOpacity onPress={handleRemoveDiscount}>
+                <Ionicons name="close-circle" size={22} color={C.redLight} />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <TextInput
+                style={[S.input, { flex: 1, textTransform: "uppercase" }]}
+                value={discountCode}
+                onChangeText={(t) => { setDiscountCode(t.toUpperCase()); setDiscountError(""); }}
+                placeholder="Enter code"
+                placeholderTextColor={C.textDim}
+                autoCapitalize="characters"
+              />
+              <TouchableOpacity
+                style={[S.btnBurg, { paddingHorizontal: 16, paddingVertical: 12, opacity: validating ? 0.6 : 1 }]}
+                onPress={handleApplyDiscount}
+                disabled={validating || !discountCode.trim()}
+              >
+                {validating ? (
+                  <ActivityIndicator color={C.burg} size="small" />
+                ) : (
+                  <Text style={S.btnBurgText}>Apply</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
+          {discountError ? <Text style={st.discountErr}>{discountError}</Text> : null}
+        </View>
+
         {/* Pay button */}
-        <TouchableOpacity style={[S.btnGold, { marginTop: 20 }]} onPress={handlePay} disabled={busy} activeOpacity={0.8}>
+        <TouchableOpacity
+          style={[S.btnGold, { marginTop: 20, opacity: busy ? 0.6 : 1 }]}
+          onPress={handlePay}
+          disabled={busy}
+          activeOpacity={0.8}
+        >
           {busy ? (
             <ActivityIndicator color={C.bg} />
           ) : (
@@ -431,5 +516,32 @@ const st = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0.8,
     textTransform: "uppercase",
+  },
+  discountSection: {
+    marginTop: 16,
+  },
+  discountApplied: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: C.green,
+    borderRadius: 10,
+    padding: 12,
+    gap: 10,
+  },
+  discountAppliedCode: {
+    color: C.greenLight,
+    fontWeight: "700",
+    fontSize: 14,
+    letterSpacing: 1,
+  },
+  discountAppliedDesc: {
+    color: C.greenLight,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  discountErr: {
+    color: C.redLight,
+    fontSize: 12,
+    marginTop: 6,
   },
 });
