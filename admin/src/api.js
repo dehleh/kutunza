@@ -48,6 +48,14 @@ export const menuAPI = {
   editItem: (catId, itemId, data) => api.patch(`/menu/${catId}/item/${itemId}`, data),
   toggleItem: (catId, itemId) => api.patch(`/menu/${catId}/item/${itemId}/toggle`),
   deleteItem: (catId, itemId) => api.delete(`/menu/${catId}/item/${itemId}`),
+  uploadImage: async (file) => {
+    const form = new FormData();
+    form.append("image", file);
+    return api.post("/menu/upload-image", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 60000,
+    });
+  },
 };
 
 // Events

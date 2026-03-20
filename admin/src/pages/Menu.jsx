@@ -328,6 +328,30 @@ function ItemModal({ title, initial, onClose, onSave, toast }) {
   const [desc, setDesc] = useState(initial.desc || "");
   const [imageUrl, setImageUrl] = useState(initial.imageUrl || "");
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  const handleImageUpload = async (file) => {
+    if (!file || !file.type.startsWith("image/")) return toast("Please select an image file", "error");
+    if (file.size > 5 * 1024 * 1024) return toast("Image must be under 5 MB", "error");
+    setUploading(true);
+    try {
+      const res = await menuAPI.uploadImage(file);
+      setImageUrl(res.url);
+      toast("Image uploaded");
+    } catch (err) {
+      toast(err.message || "Upload failed", "error");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (file) handleImageUpload(file);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -359,27 +383,70 @@ function ItemModal({ title, initial, onClose, onSave, toast }) {
           <textarea className="form-textarea" value={desc} onChange={(e) => setDesc(e.target.value)} />
         </div>
         <div className="form-group">
-          <label className="form-label">Image URL</label>
-          <input
-            className="form-input"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="https://example.com/food-image.jpg"
-          />
+          <label className="form-label">Image</label>
+          <div
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+            style={{
+              border: `2px dashed ${dragOver ? "var(--gold)" : "var(--border)"}`,
+              borderRadius: 10,
+              padding: 16,
+              textAlign: "center",
+              cursor: "pointer",
+              background: dragOver ? "rgba(184,148,47,0.08)" : "transparent",
+              transition: "all .2s",
+            }}
+            onClick={() => document.getElementById("img-upload").click()}
+          >
+            <input
+              id="img-upload"
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={(e) => { if (e.target.files[0]) handleImageUpload(e.target.files[0]); }}
+            />
+            {uploading ? (
+              <span style={{ color: "var(--gold)" }}>Uploading…</span>
+            ) : (
+              <span style={{ color: "var(--text-dim)", fontSize: 13 }}>
+                📷 Click to choose or drag & drop an image
+              </span>
+            )}
+          </div>
+          <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8 }}>
+            <input
+              className="form-input"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="…or paste image URL"
+              style={{ flex: 1 }}
+            />
+          </div>
           {imageUrl.trim() && (
-            <div style={{ marginTop: 8 }}>
+            <div style={{ marginTop: 8, position: "relative", display: "inline-block" }}>
               <img
                 src={imageUrl.trim()}
                 alt="Preview"
                 style={{ width: 120, height: 80, objectFit: "cover", borderRadius: 8, border: "1px solid var(--border)" }}
                 onError={(e) => { e.target.style.display = "none"; }}
               />
+              <button
+                type="button"
+                onClick={() => setImageUrl("")}
+                style={{
+                  position: "absolute", top: -6, right: -6,
+                  background: "var(--burg)", color: "#fff", border: "none",
+                  borderRadius: "50%", width: 20, height: 20, fontSize: 12,
+                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >✕</button>
             </div>
           )}
         </div>
         <div className="modal-actions">
           <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button type="submit" className="btn btn-gold" disabled={busy}>{busy ? "Saving…" : "Save"}</button>
+          <button type="submit" className="btn btn-gold" disabled={busy || uploading}>{busy ? "Saving…" : "Save"}</button>
         </div>
       </form>
     </div>
