@@ -5,6 +5,7 @@ export default ({ config }) => ({
   ...config,
   name: "Kutunza Gourmet",
   slug: "kutunza-gourmet",
+  owner: "kutunzas-organization",
   version: "1.0.0",
   orientation: "portrait",
   userInterfaceStyle: "light",
@@ -43,6 +44,7 @@ export default ({ config }) => ({
         backgroundColor: "#FFFFFF",
       },
     ],
+    "./plugins/withAndroidVerificationFile.js",
   ],
   extra: {
     fbApiKey: process.env.EXPO_PUBLIC_FB_API_KEY || "AIzaSyAdHiBfpB2ytaq1oXc9Ck_TmXpaLRyUiaQ",
