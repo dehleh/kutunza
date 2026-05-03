@@ -89,6 +89,10 @@ app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
 app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 
+// ─── Static Public Files (privacy policy, terms, etc.) ───────────────────────
+const path = require("path");
+app.use(express.static(path.join(__dirname, "public")));
+
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get("/", (req, res) => {
   res.json({
