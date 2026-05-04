@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Delete Your Data — Kutunza Gourmet</title>
+<meta name="description" content="Request deletion of your Kutunza Gourmet account or specific personal data." />
+<style>
+  :root {
+    --bg: #ffffff;
+    --text: #1a1a1a;
+    --muted: #555;
+    --accent: #8b1a1a;
+    --accent-dark: #6e1414;
+    --border: #e5e5e5;
+    --bg-soft: #fafafa;
+    --danger: #b00020;
+    --success: #1b7a3e;
+    --info: #0d4a8a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.65;
+  }
+  .container { max-width: 720px; margin: 0 auto; padding: 40px 24px 80px; }
+  header { border-bottom: 2px solid var(--accent); padding-bottom: 16px; margin-bottom: 28px; }
+  h1 { color: var(--accent); font-size: 1.9rem; margin: 0 0 6px; }
+  .subtitle { color: var(--muted); font-size: 0.95rem; }
+  h2 { color: var(--accent); margin-top: 32px; font-size: 1.25rem; }
+  .callout {
+    background: #fff5f5; border-left: 4px solid var(--danger);
+    padding: 14px 16px; border-radius: 4px; margin: 18px 0; font-size: 0.95rem;
+  }
+  .callout.info { background: #eff6ff; border-left-color: var(--info); }
+  .form-card {
+    background: var(--bg-soft); border: 1px solid var(--border);
+    border-radius: 8px; padding: 24px; margin-top: 16px;
+  }
+  label { display: block; font-weight: 600; margin: 14px 0 6px; font-size: 0.95rem; }
+  input, textarea, select {
+    width: 100%; padding: 10px 12px; font-size: 1rem;
+    border: 1px solid var(--border); border-radius: 6px;
+    font-family: inherit; background: #fff;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.15);
+  }
+  textarea { resize: vertical; min-height: 90px; }
+  .type-selector {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0 8px;
+  }
+  .type-option {
+    border: 2px solid var(--border); border-radius: 8px;
+    padding: 16px; cursor: pointer; transition: all 0.15s; background: #fff;
+  }
+  .type-option:hover { border-color: var(--accent); }
+  .type-option.active { border-color: var(--accent); background: #fff5f5; }
+  .type-option input { display: none; }
+  .type-option .ttl { font-weight: 600; color: var(--accent); margin-bottom: 4px; }
+  .type-option .desc { font-size: 0.88rem; color: var(--muted); }
+  .data-types {
+    display: none; margin-top: 8px; padding: 14px;
+    border: 1px dashed var(--border); border-radius: 6px; background: #fff;
+  }
+  .data-types.visible { display: block; }
+  .checkbox-row { display: flex; align-items: flex-start; gap: 10px; margin: 10px 0; }
+  .checkbox-row input[type="checkbox"] { width: auto; margin-top: 4px; }
+  .checkbox-row label { margin: 0; font-weight: 400; font-size: 0.95rem; cursor: pointer; }
+  button {
+    background: var(--accent); color: #fff; border: none;
+    padding: 12px 24px; font-size: 1rem; font-weight: 600;
+    border-radius: 6px; cursor: pointer; margin-top: 8px; transition: background 0.15s;
+  }
+  button:hover:not(:disabled) { background: var(--accent-dark); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  ul { padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  a { color: var(--accent); }
+  .alt-method {
+    background: var(--bg-soft); border: 1px solid var(--border);
+    border-radius: 8px; padding: 18px 20px; margin-top: 20px;
+  }
+  .status {
+    margin-top: 16px; padding: 12px 16px; border-radius: 6px;
+    font-size: 0.95rem; display: none;
+  }
+  .status.success {
+    background: #e8f5ec; color: var(--success);
+    border: 1px solid #b8e0c4; display: block;
+  }
+  .status.error {
+    background: #fdecea; color: var(--danger);
+    border: 1px solid #f5c6cb; display: block;
+  }
+  footer {
+    margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--border);
+    color: var(--muted); font-size: 0.9rem; text-align: center;
+  }
+  @media (max-width: 520px) { .type-selector { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Delete Your Data</h1>
+    <div class="subtitle">Kutunza Gourmet &middot; Privacy &amp; Data Deletion Requests</div>
+  </header>
+
+  <p>
+    You have full control over your personal data in <strong>Kutunza Gourmet</strong>. You may
+    request deletion of your entire account, or remove only specific pieces of personal data
+    while keeping your account active.
+  </p>
+
+  <div class="callout info">
+    <strong>Two options:</strong>
+    <ul style="margin: 6px 0 0;">
+      <li><strong>Delete my account</strong> — removes everything (account, profile, history).</li>
+      <li><strong>Delete specific data only</strong> — keep your account, but remove selected items (e.g., delivery address, phone number, order history).</li>
+    </ul>
+  </div>
+
+  <h2>What Will Be Deleted (Full Account)</h2>
+  <ul>
+    <li>Your account profile (name, email, phone number, delivery address)</li>
+    <li>Your saved preferences and settings</li>
+    <li>Your authentication credentials (Firebase Auth record)</li>
+    <li>Your loyalty rewards balance and history</li>
+    <li>Personal identifiers in your order and event-booking history</li>
+  </ul>
+
+  <h2>What We Must Retain</h2>
+  <p>For legal, tax, and accounting compliance, we must retain the following for up to 5 years (anonymized where possible):</p>
+  <ul>
+    <li>Transaction records (order totals, dates, payment confirmation IDs)</li>
+    <li>Invoices and receipts required by tax authorities</li>
+  </ul>
+  <p>These retained records will not contain your name, email, phone, or address.</p>
+
+  <h2>Submit a Request</h2>
+  <div class="form-card">
+    <form id="delete-form">
+
+      <label>What would you like to do? *</label>
+      <div class="type-selector">
+        <label class="type-option active" data-type="full">
+          <input type="radio" name="requestType" value="full" checked />
+          <div class="ttl">Delete my account</div>
+          <div class="desc">Permanently remove account &amp; all personal data.</div>
+        </label>
+        <label class="type-option" data-type="partial">
+          <input type="radio" name="requestType" value="partial" />
+          <div class="ttl">Delete specific data</div>
+          <div class="desc">Keep my account; remove only the items I select.</div>
+        </label>
+      </div>
+
+      <div id="data-types" class="data-types">
+        <strong style="font-size: 0.95rem;">Select the data you want removed:</strong>
+        <div class="checkbox-row">
+          <input type="checkbox" id="d-phone" name="dataItems" value="phone" />
+          <label for="d-phone">Phone number</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="d-address" name="dataItems" value="address" />
+          <label for="d-address">Saved delivery address(es)</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="d-orders" name="dataItems" value="orderHistory" />
+          <label for="d-orders">Order history (personal identifiers only — transaction records retained for tax compliance)</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="d-events" name="dataItems" value="eventBookings" />
+          <label for="d-events">Event booking history</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="d-rewards" name="dataItems" value="rewards" />
+          <label for="d-rewards">Loyalty rewards balance &amp; history (points will be forfeited)</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="d-name" name="dataItems" value="name" />
+          <label for="d-name">Display name (will be anonymized)</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="d-other" name="dataItems" value="other" />
+          <label for="d-other">Other (specify in the notes below)</label>
+        </div>
+      </div>
+
+      <label for="email">Email address registered to your account *</label>
+      <input type="email" id="email" name="email" required autocomplete="email" />
+
+      <label for="name">Full name on the account *</label>
+      <input type="text" id="name" name="name" required autocomplete="name" />
+
+      <label for="phone">Phone number on file (optional)</label>
+      <input type="tel" id="phone" name="phone" autocomplete="tel" />
+
+      <label for="reason">Notes (optional)</label>
+      <textarea id="reason" name="reason" placeholder="Tell us anything that helps us process your request — e.g., specific items if you chose 'Other'."></textarea>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="confirm" name="confirm" required />
+        <label for="confirm">
+          I understand that this request is permanent for the items selected and that the email
+          above belongs to me.
+        </label>
+      </div>
+
+      <button type="submit" id="submit-btn">Send Request</button>
+
+      <div id="status" class="status"></div>
+    </form>
+  </div>
+
+  <div class="alt-method">
+    <h2 style="margin-top: 0;">Prefer Email?</h2>
+    <p>You can also submit a request by emailing us from the address registered to your account:</p>
+    <p>
+      📧 <a href="mailto:kutunzafoods@gmail.com?subject=Data%20Deletion%20Request&body=Please%20delete%20the%20following%20data%20from%20my%20Kutunza%20Gourmet%20account%3A%0A%0AAccount%20email%3A%20%0AFull%20name%3A%20%0ARequest%20type%20(account%20OR%20specific%20data)%3A%20%0AItems%20to%20delete%20(if%20specific)%3A%20">kutunzafoods@gmail.com</a>
+    </p>
+    <p>Subject line: <code>Data Deletion Request</code> or <code>Account Deletion Request</code></p>
+  </div>
+
+  <h2>Processing Time</h2>
+  <p>
+    We will acknowledge your request within <strong>3 business days</strong> and complete it
+    within <strong>30 days</strong>, in line with applicable data-protection laws. You will
+    receive a confirmation email once the request is processed.
+  </p>
+
+  <h2>Need Help?</h2>
+  <p>
+    For questions about this process or our privacy practices, see our
+    <a href="/privacy.html">Privacy Policy</a> or contact
+    <a href="mailto:kutunzafoods@gmail.com">kutunzafoods@gmail.com</a>.
+  </p>
+
+  <footer>
+    &copy; 2026 Kutunza Foods. All rights reserved.
+  </footer>
+</div>
+
+<script>
+  const form = document.getElementById("delete-form");
+  const status = document.getElementById("status");
+  const btn = document.getElementById("submit-btn");
+  const dataTypesBox = document.getElementById("data-types");
+  const typeOptions = document.querySelectorAll(".type-option");
+
+  typeOptions.forEach((opt) => {
+    opt.addEventListener("click", () => {
+      typeOptions.forEach((o) => o.classList.remove("active"));
+      opt.classList.add("active");
+      const radio = opt.querySelector("input[type=radio]");
+      radio.checked = true;
+      if (radio.value === "partial") {
+        dataTypesBox.classList.add("visible");
+      } else {
+        dataTypesBox.classList.remove("visible");
+        document.querySelectorAll('input[name="dataItems"]').forEach((c) => (c.checked = false));
+      }
+    });
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    status.className = "status";
+    status.textContent = "";
+
+    const requestType = form.requestType.value;
+    const dataItems = Array.from(
+      document.querySelectorAll('input[name="dataItems"]:checked')
+    ).map((c) => c.value);
+
+    if (requestType === "partial" && dataItems.length === 0) {
+      status.className = "status error";
+      status.textContent = "Please select at least one data item to delete, or choose 'Delete my account' instead.";
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Sending…";
+
+    const data = {
+      requestType,
+      dataItems,
+      email: form.email.value.trim(),
+      name: form.name.value.trim(),
+      phone: form.phone.value.trim(),
+      reason: form.reason.value.trim(),
+    };
+
+    try {
+      const res = await fetch("/api/account/delete-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || "Request failed");
+      status.className = "status success";
+      status.textContent =
+        "✓ Request received. We'll email you a confirmation within 3 business days and complete it within 30 days.";
+      form.reset();
+      typeOptions.forEach((o) => o.classList.remove("active"));
+      typeOptions[0].classList.add("active");
+      dataTypesBox.classList.remove("visible");
+    } catch (err) {
+      status.className = "status error";
+      status.textContent =
+        "Could not submit your request automatically. Please email kutunzafoods@gmail.com directly. (" +
+        err.message + ")";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Send Request";
+    }
+  });
+</script>
+</body>
+</html>
