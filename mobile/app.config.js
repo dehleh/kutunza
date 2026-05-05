@@ -58,5 +58,5 @@ export default ({ config }) => ({
     eas: {
       projectId: "ffb82c5e-0b3f-44f2-b27d-0083795dfbb0",
     },
-  },
+  },vvvv
 });
